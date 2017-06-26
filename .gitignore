@@ -104,3 +104,4 @@ data
 documentation
 # Tensor flow inception
 models
+slim
