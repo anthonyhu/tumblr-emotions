@@ -102,4 +102,5 @@ ENV/
 
 data
 documentation
-models # Tensor flow inception
+# Tensor flow inception
+models
