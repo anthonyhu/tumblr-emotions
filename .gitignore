@@ -100,8 +100,9 @@ ENV/
 # mypy
 .mypy_cache/
 
-data
-documentation
+data/
+documentation/
+models/
 # Tensor flow inception
-models
-slim
+slim/
+data_chars/
