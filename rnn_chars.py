@@ -123,7 +123,9 @@ def run_model(sess, model, data, is_training, model_gen=None, show_loss_graph=Fa
             #np.save('generated_chars.npy', np.array(generated_chars))
             #generated_chars = np.load('generated_chars.npy')
             print('Generated characters:')
-            print(''.join(list(generated_chars)).replace('_', ' '))
+            # Need to add encode('utf-8') because when using the server,
+            # sys.stdout.encoding is None
+            print(u''.join(list(generated_chars)).replace(u'_', u' ').encode('utf-8'))
         else:
             print('Perplexity = {0:.3f}, accuracy = {1:.3f}, speed = {2:.0f} cps'\
                   .format(np.exp(total_loss / nb_iter), total_accuracy / (i + 1),
@@ -152,16 +154,25 @@ def generate_chars(sess, model, first_char, max_iteration):
     return samples
 
 def main():
-    train_data, valid_data, test_data, char_to_id = ptb_raw_data('data_chars', char=True)
+    #train_data, valid_data, test_data, char_to_id = ptb_raw_data('data_chars', char=True)
+    # Only contains 5M chars
+    full_data = np.loadtxt('data_chars/happy_chars.txt', dtype=int)
+    char_to_id = np.load('data_chars/char_to_id.npy').item()
+    # Split into train/val/test 80/10/10
+    train_split = (int)(full_data.shape[0] * 0.8)
+    val_split = (int)(full_data.shape[0] * 0.9)
+    train_data = full_data[:train_split]
+    valid_data = full_data[train_split:val_split]
+    test_data = full_data[val_split:]
     id_to_char = {i: k for k, i in char_to_id.iteritems()}
     config = {'char_to_id': char_to_id,
               'id_to_char': id_to_char,
               'batch_size': 20,
               'num_steps': 20,
               'vocab_size': len(char_to_id),
-              'hidden_size': 200,
+              'hidden_size': 300,
               'num_layers': 2, # Number of stacked LSTMs
-              'dropout': 0.9, # Proba to keep neurons
+              'dropout': 0.8, # Proba to keep neurons
               'max_grad_norm': 5.0, # Maximum norm of gradient
               'init_scale': 0.1, # Weights initialization scale
               'initial_lr': 1.0,
