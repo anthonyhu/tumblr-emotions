@@ -59,11 +59,12 @@ class CharModel():
         optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
         self.train_step = optimizer.apply_gradients(zip(grads, trainable_vars),
                                                     global_step=tf.contrib.framework.get_or_create_global_step())
-        self.predict = tf.cast(tf.argmax(tf.reshape(logits, [-1, vocab_size]), 1), tf.int32)
-        correct_pred = tf.equal(self.predict, tf.reshape(self.target, [-1]))
+        self.sample = tf.multinomial(tf.reshape(logits, [-1, vocab_size]), 1)
+        predict = tf.cast(tf.argmax(tf.reshape(logits, [-1, vocab_size]), 1), tf.int32)
+        correct_pred = tf.equal(predict, tf.reshape(self.target, [-1]))
         self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-def run_model(sess, model, data, is_training, model_gen, show_loss_graph=False):
+def run_model(sess, model, data, is_training, model_gen=None, show_loss_graph=False):
     batch_size = model.config['batch_size']
     num_steps = model.config['num_steps']
     dropout = model.config['dropout']
@@ -117,8 +118,8 @@ def run_model(sess, model, data, is_training, model_gen, show_loss_graph=False):
                 
         if is_training:
             first_char = np.array([[4]])
-            preds = generate_chars(sess, model_gen, first_char, 500)
-            generated_chars = map(lambda x: model_gen.config['id_to_char'][x], preds)
+            samples = generate_chars(sess, model_gen, first_char, 2000)
+            generated_chars = map(lambda x: model_gen.config['id_to_char'][x], samples)
             #np.save('generated_chars.npy', np.array(generated_chars))
             #generated_chars = np.load('generated_chars.npy')
             print('Generated characters:')
@@ -137,17 +138,18 @@ def run_model(sess, model, data, is_training, model_gen, show_loss_graph=False):
             plt.show()
             
 def generate_chars(sess, model, first_char, max_iteration):
-    ops = [model.final_state, model.predict]
+    ops = [model.final_state, model.sample]
     current_char = first_char.copy()
     numpy_state = sess.run(model.initial_state)
-    preds = []
+    samples = []
     for i in range(max_iteration):
-        numpy_state, pred = sess.run(ops, feed_dict={model.input_data: current_char,
-                                                     model.initial_state: numpy_state,
-                                                     model.keep_prob: 1.0})
-        preds.append(pred[0])
-        current_chars = pred.reshape((1, 1))
-    return preds
+        # Sample from the multinomial distribution of the next character
+        numpy_state, sample = sess.run(ops, feed_dict={model.input_data: current_char,
+                                                       model.initial_state: numpy_state,
+                                                       model.keep_prob: 1.0})
+        samples.append(sample[0][0])
+        current_char = sample
+    return samples
 
 def main():
     train_data, valid_data, test_data, char_to_id = ptb_raw_data('data_chars', char=True)
