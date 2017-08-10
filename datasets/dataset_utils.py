@@ -84,16 +84,17 @@ def download_and_uncompress_tarball(tarball_url, dataset_dir):
   tarfile.open(filepath, 'r:gz').extractall(dataset_dir)
 
 
-def write_label_file(labels_to_class_names, dataset_dir,
+def write_label_file(labels_to_class_names, dataset_dir, subdir,
                      filename=LABELS_FILENAME):
   """Writes a file with the list of class names.
 
   Args:
     labels_to_class_names: A map of (integer) labels to class names.
-    dataset_dir: The directory in which the labels file should be written.
+    dataset_dir: The directory containing the data
+    subdir: The subdirectory in which the labels file should be written.
     filename: The filename where the class names are written.
   """
-  labels_filename = os.path.join(dataset_dir, filename)
+  labels_filename = os.path.join(dataset_dir, subdir, filename)
   with tf.gfile.Open(labels_filename, 'w') as f:
     for label in labels_to_class_names:
       class_name = labels_to_class_names[label]

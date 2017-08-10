@@ -40,7 +40,7 @@ from datasets import dataset_utils
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 
 # The number of images in the validation set.
-_NUM_VALIDATION = 350
+_NUM_VALIDATION = 50
 
 # Seed for repeatability.
 _RANDOM_SEED = 0
@@ -69,22 +69,24 @@ class ImageReader(object):
     return image
 
 
-def _get_filenames_and_classes(dataset_dir):
+def _get_filenames_and_classes(dataset_dir, subdir='photos'):
   """Returns a list of filenames and inferred class names.
 
   Args:
-    dataset_dir: A directory containing a set of subdirectories representing
-      class names. Each subdirectory should contain PNG or JPG encoded images.
+    dataset_dir: A directory containing subdir that contains a set of 
+      subdirectories representing class names. Each subdirectory should 
+      contain PNG or JPG encoded images.
+    subdir: A subdirectory of dataset_dir.
 
   Returns:
-    A list of image file paths, relative to `dataset_dir` and the list of
+    A list of image file paths, relative to `dataset_dir/subdir` and the list of
     subdirectories, representing class names.
   """
-  flower_root = os.path.join(dataset_dir, 'flower_photos')
+  root = os.path.join(dataset_dir, subdir)
   directories = []
   class_names = []
-  for filename in os.listdir(flower_root):
-    path = os.path.join(flower_root, filename)
+  for filename in os.listdir(root):
+    path = os.path.join(root, filename)
     if os.path.isdir(path):
       directories.append(path)
       class_names.append(filename)
@@ -99,14 +101,14 @@ def _get_filenames_and_classes(dataset_dir):
   return photo_filenames, sorted(class_names)
 
 
-def _get_dataset_filename(dataset_dir, split_name, shard_id):
-  output_filename = 'flowers_%s_%05d-of-%05d.tfrecord' % (
+def _get_dataset_filename(dataset_dir, subdir, split_name, shard_id):
+  output_filename = 'tumblr_%s_%05d-of-%05d.tfrecord' % (
       split_name, shard_id, _NUM_SHARDS)
-  return os.path.join(dataset_dir, output_filename)
+  return os.path.join(dataset_dir, subdir, output_filename)
 
 
-def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
-  """Converts the given filenames to a TFRecord dataset.
+def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir, subdir='tfrecords'):
+  """Converts the given filenames to a TFRecords dataset.
 
   Args:
     split_name: The name of the dataset, either 'train' or 'validation'.
@@ -114,6 +116,7 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
     class_names_to_ids: A dictionary from class names (strings) to ids
       (integers).
     dataset_dir: The directory where the converted datasets are stored.
+    subdir: A subdirectory to save the TFRecords dataset
   """
   assert split_name in ['train', 'validation']
 
@@ -126,7 +129,7 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
 
       for shard_id in range(_NUM_SHARDS):
         output_filename = _get_dataset_filename(
-            dataset_dir, split_name, shard_id)
+            dataset_dir, subdir, split_name, shard_id)
 
         with tf.python_io.TFRecordWriter(output_filename) as tfrecord_writer:
           start_ndx = shard_id * num_per_shard
@@ -135,7 +138,6 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
             sys.stdout.write('\r>> Converting image %d/%d shard %d' % (
                 i+1, len(filenames), shard_id))
             sys.stdout.flush()
-
             # Read the filename:
             image_data = tf.gfile.FastGFile(filenames[i], 'rb').read()
             height, width = image_reader.read_image_dims(sess, image_data)
@@ -161,25 +163,26 @@ def _clean_up_temporary_files(dataset_dir):
   filepath = os.path.join(dataset_dir, filename)
   tf.gfile.Remove(filepath)
 
-  tmp_dir = os.path.join(dataset_dir, 'flower_photos')
+  tmp_dir = os.path.join(dataset_dir, 'photos')
   tf.gfile.DeleteRecursively(tmp_dir)
 
 
-def _dataset_exists(dataset_dir):
+def _dataset_exists(dataset_dir, subdir='photos'):
   for split_name in ['train', 'validation']:
     for shard_id in range(_NUM_SHARDS):
       output_filename = _get_dataset_filename(
-          dataset_dir, split_name, shard_id)
+          dataset_dir, subdir, split_name, shard_id)
       if not tf.gfile.Exists(output_filename):
         return False
   return True
 
 
-def convert_images(dataset_dir):
+def convert_images(dataset_dir, subdir='photos'):
   """Runs the download and conversion operation.
 
   Args:
-    dataset_dir: The dataset directory where the dataset is stored.
+    dataset_dir: The data directory
+    subdir: The subdirectory where the dataset is stored.
   """
   #if not tf.gfile.Exists(dataset_dir):
     #tf.gfile.MakeDirs(dataset_dir)
@@ -206,8 +209,8 @@ def convert_images(dataset_dir):
 
   # Finally, write the labels file:
   labels_to_class_names = dict(zip(range(len(class_names)), class_names))
-  dataset_utils.write_label_file(labels_to_class_names, dataset_dir)
+  dataset_utils.write_label_file(labels_to_class_names, dataset_dir, subdir)
 
   #_clean_up_temporary_files(dataset_dir)
-  print('\nFinished converting the Flowers dataset!')
+  print('\nFinished converting the dataset!')
 
