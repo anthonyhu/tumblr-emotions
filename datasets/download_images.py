@@ -7,11 +7,11 @@ def download_im(search_query, start, end, dataset_dir, subdir='photos'):
     """Download images given the urls in the dataframe specified by a search query.
 
     Args:
-        search_query: A string giving the sentiment of the photos to be downloaded
-        start: Index to start downloading
-        end: Index to finish downloading
-        dataset_dir: Directory where the dataframes are stored
-        subdir: Subdirectory to store the photos
+        search_query: A string giving the sentiment of the photos to be downloaded.
+        start: Index to start downloading.
+        end: Index to finish downloading.
+        dataset_dir: Directory where the dataframes are stored.
+        subdir: Subdirectory to store the photos.
 
     Returns:
         Images downloaded in the directory dataset_dir/subdir/search_query, having 
