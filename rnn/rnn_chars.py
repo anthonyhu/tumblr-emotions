@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 from time import time
-from reader import ptb_raw_data
 
 class CharModel():
     def __init__(self, config):
