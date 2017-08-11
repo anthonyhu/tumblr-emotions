@@ -1,8 +1,10 @@
 import os
-import pandas as pd
-import tensorflow as tf
 import urllib2
 import io
+
+import pandas as pd
+import tensorflow as tf
+
 from PIL import Image
 
 def download_im(search_query, start, end, dataset_dir, subdir='photos'):
