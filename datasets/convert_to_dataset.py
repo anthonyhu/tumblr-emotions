@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Provides data for the flowers dataset.
-
-The dataset scripts used to create the dataset can be found at:
-tensorflow/models/slim/datasets/download_and_convert_flowers.py
+"""Provides data for the Tumblr dataset.
 """
 
 from __future__ import absolute_import
@@ -25,28 +22,31 @@ from __future__ import print_function
 import os
 import tensorflow as tf
 
-from slim.datasets import dataset_utils
+from datasets import dataset_utils
 
 slim = tf.contrib.slim
 
-_FILE_PATTERN = 'flowers_%s_*.tfrecord'
+_FILE_PATTERN = 'tumblr_%s_*.tfrecord'
 
-SPLITS_TO_SIZES = {'train': 3320, 'validation': 350}
+SPLITS_TO_SIZES = {'train': 98, 'validation': 50}
 
-_NUM_CLASSES = 5
+_NUM_CLASSES = 3
 
 _ITEMS_TO_DESCRIPTIONS = {
     'image': 'A color image of varying size.',
-    'label': 'A single integer between 0 and 4',
+    'label': 'A single integer between 0 and 2',
 }
 
 
-def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
-  """Gets a dataset tuple with instructions for reading flowers.
+def get_split(split_name, dataset_dir, photos_subdir='photos', tfrecords_subdir='tfrecords', 
+              file_pattern=None, reader=None):
+  """Gets a dataset tuple with instructions for reading tumblr data.
 
   Args:
     split_name: A train/validation split name.
     dataset_dir: The base directory of the dataset sources.
+    photos_subdir: The subdirectory containing the photos.
+    tfrecords_subdir: The subdirectory containing the TFRecords files.
     file_pattern: The file pattern to use when matching the dataset sources.
       It is assumed that the pattern contains a '%s' string so that the split
       name can be inserted.
@@ -63,7 +63,7 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
 
   if not file_pattern:
     file_pattern = _FILE_PATTERN
-  file_pattern = os.path.join(dataset_dir, file_pattern % split_name)
+  file_pattern = os.path.join(dataset_dir, tfrecords_subdir, file_pattern % split_name)
 
   # Allowing None in the signature so that dataset_factory can use the default.
   if reader is None:
@@ -71,7 +71,7 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
 
   keys_to_features = {
       'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value='png'),
+      'image/format': tf.FixedLenFeature((), tf.string, default_value='jpg'),
       'image/class/label': tf.FixedLenFeature(
           [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
   }
@@ -85,8 +85,8 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
       keys_to_features, items_to_handlers)
 
   labels_to_names = None
-  if dataset_utils.has_labels(dataset_dir):
-    labels_to_names = dataset_utils.read_label_file(dataset_dir)
+  if dataset_utils.has_labels(dataset_dir, photos_subdir):
+    labels_to_names = dataset_utils.read_label_file(dataset_dir, photos_subdir)
 
   return slim.dataset.Dataset(
       data_sources=file_pattern,
