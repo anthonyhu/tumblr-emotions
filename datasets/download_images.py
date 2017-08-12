@@ -8,7 +8,7 @@ import tensorflow as tf
 from PIL import Image
 
 def download_im(search_query, start, end, dataset_dir, subdir='photos'):
-    """Download images given the urls in the dataframe specified by the search query.
+    """Download images using the urls in the dataframe specified by the search query.
 
     Parameters:
         search_query: A string giving the sentiment to load the corresponding dataframe.
