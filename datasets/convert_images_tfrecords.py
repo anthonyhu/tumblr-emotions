@@ -174,12 +174,12 @@ def _dataset_exists(dataset_dir, photos_subdir='photos'):
 
 
 def convert_images(dataset_dir, photos_subdir='photos', tfrecords_subdir='tfrecords'):
-  """Runs the download and conversion operation.
+  """Downloads the photos and convert them to TFRecords.
 
   Parameters:
-    dataset_dir: A data directory.
-    photos_subdir: A subdirectory where the photos are stored.
-    tfrecords_subdir: A subdirectory to store the TFRecords files.
+    dataset_dir: The data directory.
+    photos_subdir: The subdirectory where the photos are stored.
+    tfrecords_subdir: The subdirectory to store the TFRecords files.
   """
   # Create the tfrecords_subdir if it doesn't exist
   if not tf.gfile.Exists(os.path.join(dataset_dir, tfrecords_subdir)):
