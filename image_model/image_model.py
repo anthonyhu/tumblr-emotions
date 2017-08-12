@@ -2,6 +2,7 @@
 """
 import os
 
+import numpy as np
 import tensorflow as tf
 
 from datasets import dataset_utils
@@ -89,8 +90,10 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         train_dir: The directory to save the trained model.
         num_steps: The number of steps training the model.
     """
-    if not tf.gfile.Exists(train_dir):
-        tf.gfile.MakeDirs(train_dir)
+    if tf.gfile.Exists(train_dir):
+        # Delete old model
+        tf.gfile.DeleteRecursively(train_dir)
+    tf.gfile.MakeDirs(train_dir)
 
     with tf.Graph().as_default():
         tf.logging.set_verbosity(tf.logging.INFO)
@@ -109,7 +112,7 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         total_loss = slim.losses.get_total_loss()
 
         # Create some summaries to visualize the training process:
-        tf.summary.scalar('losses/Total Loss', total_loss)
+        tf.summary.scalar('losses/Total_Loss', total_loss)
       
         # Specify the optimizer and create the train op:
         optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
