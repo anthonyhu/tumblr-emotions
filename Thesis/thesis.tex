@@ -1,0 +1,46 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%      This is thesis.tex.  You have to  put this file in       % 
+%              the same directory with your thesis files.       %
+%                Written by M. Imran 2001/06/18                 % 
+%                 No Copyright for this file                    % 
+%                 Save your time and enjoy it                   % 
+%                                                               % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{dmathesis}
+%% uncomment the following line to print equation labels next to
+%% equation numbers. 
+%\usepackage{showlabel}
+
+%% Table of content spacing
+\usepackage{setspace}
+
+%% The following is to control the format of your thesis
+\input{format}
+
+%% File to be included while running latex.
+\includeonly{chapter1,chapter2,chapter3%
+                 ,chapter4,chapter5,chapter6,ref,append}
+
+\begin{document}
+
+%% Front page of thesis
+\input{frontpage}
+
+%% Main text
+% set page number starts from 1
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+%% To ensure the equation counter works correctly
+%\eqlabon
+%\eqlaboff
+
+\include{chapter1}
+\include{chapter2}
+\include{chapter3}
+\include{chapter4}
+\include{chapter5}
+\include{chapter6}
+\include{ref}
+\include{append}
+\end{document}

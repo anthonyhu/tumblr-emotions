@@ -1,0 +1,18 @@
+\contentsline {chapter}{\hbox to\@tempdima {\hfil }Declaration}{ii}
+\contentsline {chapter}{\hbox to\@tempdima {\hfil }Acknowledgements}{iii}
+\contentsline {chapter}{\hbox to\@tempdima {\hfil }Abstract}{iv}
+\contentsline {chapter}{\numberline {1}Introduction}{1}
+\contentsline {chapter}{\numberline {2}Visual recognition}{2}
+\contentsline {section}{\numberline {2.1}Section 1}{2}
+\contentsline {chapter}{\numberline {3}Natural Language Processing}{3}
+\contentsline {section}{\numberline {3.1}Section 1}{3}
+\contentsline {chapter}{\numberline {4}Recurrent Neural Networks for text generation}{4}
+\contentsline {section}{\numberline {4.1}Section 1}{4}
+\contentsline {chapter}{\numberline {5}Useful maths in LaTeX}{5}
+\contentsline {section}{\numberline {5.1}Equations related}{5}
+\contentsline {section}{\numberline {5.2}Writing}{6}
+\contentsline {chapter}{\numberline {6}Conclusions}{8}
+\contentsline {chapter}{\hbox to\@tempdima {\hfil }Bibliography}{9}
+\contentsline {chapter}{\hbox to\@tempdima {\hfil }Appendix}{10}
+\contentsline {chapter}{\numberline {A}Basic and Auxiliary Results}{10}
+\contentsline {section}{\numberline {A.1}Basic Results}{10}

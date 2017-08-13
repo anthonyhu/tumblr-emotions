@@ -1,0 +1,99 @@
+\chapter{Useful maths in LaTeX}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Equations related}
+
+\begin{align} 
+\frac{\partial u_{1}}{\partial t}&  = \Delta w_{1} \quad  \text{in}\;\;\Omega,t>0, \label{1a0001a}\\ 
+\frac{\partial u_{2}}{\partial t}&  = \Delta w_{2} \quad \text{in}\;\;\Omega,t>0 ,\label{1a0001b}\\
+\intertext{where}
+w_{1}  &=  \frac{\delta F(u_{1},u_{2})}{\delta u_{1}}, \label{1a0001c}\\
+w_{2}  &=  \frac{\delta F(u_{1},u_{2})}{\delta u_{2}},\label{1a0001d}\\ 
+F(u_{1},u_{2})   &=   b_1u_1^4- a_1u_1^2+c_1|\nabla u_1|^2 \nonumber\\
+   &\quad  + b_2u_2^4-  a_2u_2^2+c_2|\nabla u_2|^2 \nonumber\\
+   &\quad  + D \left(u_1+ \sqrt{\frac{a_1}{2b_1}}\right )^2  \left(u_2+
+       \sqrt{\frac{a_2}{2b_2}}\right)^2.\label{1a0001e}
+\end{align}
+
+\begin{align}
+U^n_1=\sum_{i=1}^{J}U_{1,i}^n\eta_i,\quad W^n_1=\sum_{i=1}^{J}W_{1,i}^n\eta_i,\label{5E0001a}\\
+U^n_2=\sum_{i=1}^{J}U_{2,i}^n\eta_i,\quad W^n_2=\sum_{i=1}^{J}W_{2,i}^n\eta_i,\label{5E0001b}
+\end{align}
+
+We also use the following notation, for $1 \leq q < \infty,$
+\begin{align*}
+L^{q}(0,T;W^{m,p}(\Omega)):=& \; \left\{ \eta(x,t):\;  \eta(\cdot,t) \in W^{m,p}(\Omega), \int_0^T  \|\eta(\cdot,t)\|_{m,p}^q\; dt < \infty\right \},\\
+L^{\infty}(0,T;W^{m,p}(\Omega)):=& \; \left\{ \eta(x,t):
+\eta(\cdot,t) \in W^{m,p}(\Omega)
+,\; \displaystyle{\operatornamewithlimits{ess\,sup}_{t\in (0,T)}} \|\eta(\cdot,t)\|_{m,p} < \infty\right \},
+\end{align*}
+
+Cases
+\begin{equation}
+|v|_{0,r} \leq C|v|^{1-\mu}_{0,p} \|v\|^\mu_{m,p},\quad \text{ holds for
+} 
+r\in 
+\begin{cases}
+        [p,\infty]&  \mbox{ if }  m-\frac{d}{p} > 0,\\
+        [p,\infty) &\mbox{ if } m-\frac{d}{p} = 0,\\
+        [p,-\frac{d}{ m-d/p}]& \text{ if } m-\frac{d}{p} < 0.
+\end{cases}\label{gagliar}
+\end{equation}
+
+\section{Writing}
+
+%=====another Lemma==================
+\begin{Lem}\label{Lem201}
+Let $u,v,\eta \in H^1{(\Omega)}$, $f=u-v$, $g=u^m v^{n-m}$, $m,n=0,1,2,$ and $n-m\geq
+0$. Then for $d=1,2,3,$
+\begin{align}
+\bigg| \int_\Omega f g \eta dx \bigg| &\leq C |u-v|_0\; \|u\|_1^m\; \|v\|_1^{n-m}\; \|\eta\|_1.
+\label{2le000}
+\end{align}
+\end{Lem}
+\bproof
+Note that using the Cauchy-Schwarz inequality we have
+\begin{align*}
+|(u)^m v^{n-m}|_{0,p}&\leq
+\begin{cases}
+|u|_{0,2mp}^m \;|v|_{0,2(n-m)p}^{(n-m)}&\mbox{for}\;\;
+ n-m\neq 0,\;\;\mbox{and}\;\; m\neq 0,\\
+|u|_{0,mp}^m \;\;\mbox{or}\;\;|v|_{0,(n-m)p}^{(n-m)}&\mbox{for}\;\;
+ m= 0,\;\;\mbox{or}\;\; n-m= 0\;\;\mbox{respectively}.\\
+\end{cases}
+\end{align*}
+Noting the  generalise H\"older inequality  and the result above we have
+\begin{align*}
+\bigg| \int_\Omega f g \eta dx \bigg| 
+&\leq |u-v|_0\;|u^m v^{n-m}|_{0,3}\;|\eta|_{0,6},\\
+&\leq |u-v|_0\;\;|\eta|_{0,6}
+\begin{cases}
+|u|_{0,6}^2\;&\mbox{for}\;\;m=2,\\
+|u|_{0,6}\;|v|_{0,6} \;&\mbox{for}\;\;m=1,\\
+|v|_{0,6}^2 \;&\mbox{for}\;\;m=0,\\
+\end{cases}\\
+&\leq C |u-v|_0\; \|u\|_1^m\; \|v\|_1^{n-m}\; \|\eta\|_1,
+\end{align*}
+where we have noted (\ref{gagliar}) to obtain the last inequality.
+This ends the proof.\eproof
+
+We consider the problem: \\
+({\textbf P}) \quad Find
+$\{u_i, w_i\}$  such that $u_i \in
+H^1(0,T;(H^1(\Omega))')\cap L^\infty(0,T;H^1(\Omega))$ for $a.e.$\; $t\in(0,T)$, $ w_i \in L^2(0,T;H^1(\Omega))$ 
+%\eqlabon 
+$$\left \langle\frac{\partial u_{1}}{\partial t},\eta \right\rangle$$
+
+
+
+
+
+
+
+
+
+
+
+
+
