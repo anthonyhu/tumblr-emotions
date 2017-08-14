@@ -70,23 +70,39 @@ The sigmoid function is the simplest function having values between 0 and 1 mimi
 
 The ReLU's gradient is non-saturating for highly excited neurons which turns out to be a nice property to learn faster. In the network, each layer of convolution is followed by a ReLU layer, that simply applies the function $\text{max}(0,x)$ to each neuron.
 
+\newpage
 \subsection{Pooling layer}
-After a few iterations of convolutions, inserting pooling layers in-between convolutional layers might be a good idea to control the spatial complexity of the network. More concretely, what is most used in practice is the 2x2 max-pooling:
+
+There is a lot of spatial redundancy in an image, we don't need all the pixels to be able to identify what's in a picture. For example we can perfectly identify the animal in Figure \ref{kittens} by reducing the number of pixels by two.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/kittens.png}
+\caption{A kitten, and the same kitten with twice less pixels}
+\label{kittens}
+\end{figure}
+
+The same idea applies to convolved images, we might not need all the neurons that were created. The pooling operation downsamples the image in the following way:
 \begin{itemize}
 \item Pick a channel among the $d$ ones.
 \item Position yourself on the top-left 2x2 square of the image and take the max.
-\item Repeat by sliding through the image vertically and horizontally with a stride (step) of 2.
+\item Repeat by sliding through the image vertically and horizontally with a stride/step of 2 (see Figure \ref{maxpool}).
 \end{itemize}
 
-\begin{figure}
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{Images/maxpool.png}
 \caption{Max pooling \cite{camb-spark}}
+\label{maxpool}
 \end{figure}
 
-After applying max pooling to each channel, the resulting image's dimension is $(\frac{h}{2}, \frac{w}{2}, d)$ and we have discarded 75\% of the neurons (as in each max-pool operation, we only keep the maximum neuron among the fours), effectively reducing the number of parameters and controlling overfitting. Pooling is also useful to create translation-invariant features.
+After applying max pooling to each channel, the resulting image dimension is $(\frac{h}{2}, \frac{w}{2}, d)$ and we have discarded 75\% of the neurons (as in each max-pool operation, we only keep the maximum neuron among the fours), effectively reducing the number of parameters and controlling overfitting.
 
-\subsection{An example of ConvNet}
+You could wonder why max-pooling and not average pooling (taking the mean value of the four neurons)? The convolutions allow us to see if a certain feature is in the image when a neuron fires, and we only want to know if that feature is there in a certain region. Therefore taking the max of the four neurons is sufficient to know whether that feature is there or not.
+
+In practice, after a few iterations of convolutions, inserting pooling layers in-between convolutional layers might be a good idea to control the spatial complexity of the network.
+
+\subsection{An example of convolutional network}
 Here is an example of a convolutional neural network with an input image of size $(100, 100, 3)$:
 
 \begin{figure}[H]
@@ -103,13 +119,17 @@ Here is an example of a convolutional neural network with an input image of size
 \item Max-pooling of size $2\times2$ with stride 2, reducing the height and width by 2.
 \end{itemize}
 
-After the last operation, the neurons are reshaped into a vector that can be fed to the traditional fully-connected layers of neural networks.
+After the last operation, the neurons are reshaped into a vector that can be fed to the traditional fully connected layers of neural networks.
 
 \subsection{Deep convolutional networks}
 Best results are achieved using deep convolutional networks, that is to say by stacking many layers of convolutions, ReLU, max-pool. But what exactly is `many'? Let us have a look at the main Computer Vision competition: ImageNet Large Scale Visual Recognition (ILSVR).
 \begin{enumerate}
-\item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed the other competitors at the ILSVR 2012 by a large margin: top-5 error of 16\% compared to the runner-up with 26\%. AlexNet has 5 convolutional layers (followed by ReLU), 3 max-pool layers and 3 fully-connected layers, producing a 8-layer deep network (not counting the max-pooling as it doesn't have any parameters).
-\item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: This is the winner of the ILSVR 2014 with a top-5 error of 6.7\% . This architecture used the `Inception Module' which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet. 
+\item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed the other competitors at ILSVR 2012 by a large margin: top-5 error of 16\% compared to the runner-up with 26\%. AlexNet has 5 convolutional layers (followed by ReLU), 3 max-pool layers and 3 fully-connected layers, producing a 8-layer deep network (not counting the max-pooling as it doesn't have any parameters).
+\item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: This is the winner of ILSVR 2014 with a top-5 error of 6.7\% . This architecture used the `Inception Module' which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet and is 22 layers deep.
+\item \textbf{ResNet} \cite{resnet}: The winner of ILSVR 2015 with a top-5 error of 3.6\% thanks to an astonishing 152 layers convolutional network. This architecture features `skip connections' and has the particularity of not having a fully connected layer at the end of the network.
+
+
+(explain Inception module, talk about computational considerations (Stanford CS231n))
 \end{enumerate}
 
 
