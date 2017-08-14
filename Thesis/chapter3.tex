@@ -103,4 +103,13 @@ Here is an example of a convolutional neural network with an input image of size
 \item Max-pooling of size $2\times2$ with stride 2, reducing the height and width by 2.
 \end{itemize}
 
+After the last operation, the neurons are reshaped into a vector that can be fed to the traditional fully-connected layers of neural networks.
+
+\subsection{Deep convolutional networks}
+Best results are achieved using deep convolutional networks, that is to say by stacking many layers of convolutions, ReLU, max-pool. But what exactly is `many'? Let us have a look at the main Computer Vision competition: ImageNet Large Scale Visual Recognition (ILSVR).
+\begin{enumerate}
+\item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed the other competitors at the ILSVR 2012 by a large margin: top-5 error of 16\% compared to the runner-up with 26\%. AlexNet has 5 convolutional layers (followed by ReLU), 3 max-pool layers and 3 fully-connected layers, producing a 8-layer deep network (not counting the max-pooling as it doesn't have any parameters).
+\item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: This is the winner of the ILSVR 2014 with a top-5 error of 6.7\% . This architecture used the `Inception Module' which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet. 
+\end{enumerate}
+
 
