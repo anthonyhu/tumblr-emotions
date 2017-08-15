@@ -4,9 +4,32 @@
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Overview of the data}
-Tumblr's posts were extracted using the official API thanks to their tags that were taken as the ground truth. The tags represent the user's emotion: happy, sad, angry, surprised, scared or disgusted. The data extraction took several weeks due to the API's limitations: 1,000 requests per hour and 5,000 requests per day, with each request containing 20 posts. The final dataset has about one million posts and six different emotions.
+Tumblr posts were retrieved using the official API, here is an example of a post:
+\begin{figure}[H]
+\centering
+\includegraphics[width=.58\textwidth]{Images/chowchow.png}
+\caption{An example of a Tumblr post}
+\end{figure}
 
-Need to talk about preprocessing non-english posts/longest post, smallest post/remove the tag from the text
+The tags are valuable as they indicate the user state of mind when writing that post. Queries were made searching for six different emotions appearing in the tags: happy, sad, angry, surprised, scared and disgusted. Each post contains the following information:
+\begin{enumerate}
+\item The text, in the example above: \textit{When dogs are back home!}
+\item The picture.
+\item The associated emotion: one among the six classes.
+\end{enumerate}
+
+The data extraction took several weeks due to the API's limitations: 1,000 requests per hour and 5,000 requests per day, with each request containing 20 posts. The final dataset has about 1 million posts.
+
+\section{Data preprocessing}
+In some posts, the tag was also appearing in the text itself, for instance:
+\begin{quote}
+\textit{``When you're on vacations and there is a rainstorm. \#fail \#sad"}.
+\end{quote}
+Keeping the \textit{\#sad} would bias the learning process and the neural network would simply learn to detect the presence or absence of that tag. To ensure that the network is actually learning something, we removed the hashtags containing the emotion to be predicted.
+
+Also, Tumblr is used worldwide, therefore posts not written in english had to removed from the training data.
+
+Need to talk about preprocessing non-english posts/longest post, smallest post/ + final dataset size?
 
 Here are examples of posts with their associated emotions:
 
@@ -47,6 +70,6 @@ Here are examples of posts with their associated emotions:
   \includegraphics[width=.8\linewidth]{Images/disgusted.jpg}
   \caption{\textbf{Disgusted}: ``Me when I see a couple expressing their affection in physical ways in public"}
 \end{subfigure}
-\caption{Some examples of Tumblr posts \cite{tumblr-photos}}
+\caption{The 6 emotions in Tumblr posts \cite{tumblr-photos}}
 %\label{fig:fig}
 \end{figure}
