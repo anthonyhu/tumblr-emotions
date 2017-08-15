@@ -1,5 +1,5 @@
 \chapter{Visual recognition}
-The pictures accompanying the posts usually help a lot in determining the emotion of the user. For instance, happy photos might contain landscapes with the sun or a beach while sad ones might have really dark colors. To analyse the images, we'll use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks. First we'll explain how they work and then we'll dive into the architecture we've used for deep sentiment analysis.
+The pictures are valuable to accurately determine the emotion of the user. For instance, happy photos might contain sunny landscapes and sandy beaches while sad pictures might contain darker colors. To analyse the images, we'll use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks. First we'll explain how they work and then we'll dive into the architecture we've used for deep sentiment analysis.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,11 +7,11 @@ The pictures accompanying the posts usually help a lot in determining the emotio
 A convolutional neural networks, often called ConvNets, can be seen as a simulation of the human visual cortex, that is to say an aggregation of plenty of receptive fields. (some illustrations might be helpful here)
 
 \subsection{Convolutional layer}
-Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and 3 representing the number of channels (red, blue, green). If you simply flatten that image and transform it into a vector of size $h\times h \times 3$ and feed that vector to a neural network, you'll get not-so-good results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
+Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and 3 representing the number of channels (red, blue, green). If you simply flatten that image and transform it into a vector of size $h\times h \times 3$ and feed that vector to a neural network, you'll get average results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
 \begin{itemize}
-\item Each convolution is described by a filter F of size $(f, f, 3)$, $f$ usually being in the range $[1,13]$.
-\item Position the filter on the upper left of the image and element-wise multiply with the filter, then sum those numbers to obtain a raw number.
-\item Slide across the image, one pixel at a time horizontally and vertically, and repeat the previous operation.
+\item Each convolution is described by a filter F of size $(f, f, 3)$, $f$ usually being equal to 3, 5, or 7.
+\item Position the filter on the upper left of the image and element-wise multiply with the filter, then sum those numbers to obtain a `neuron'.
+\item Slide across the image, one pixel at a time horizontally and vertically, and repeat the previous operation (see Figure \ref{convolution}).
 \end{itemize}
 
 \begin{figure}
@@ -28,15 +28,18 @@ Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and 3 re
   \caption{The result of the convolution}
 \end{subfigure}
 \caption{A convolution, each neuron been a `receptive field' \cite{gorner}}
+\label{convolution}
 \end{figure}
 
-By sliding through the image, you would get a new matrix of dimension $(h_{new}, w_{new},1)$, with $h_{new}=h-f+1$ and $w_{new}=w-f+1$. However, we usually don't want to reduce the size of our input image that fast, as we usually have several convolutions. To ensure that the image has the same size, zero-padding is used: we add $p$ zeros to the borders of the input image to preserve the spatial size of the input. With zero-padding, $h_{new}$ becomes: $h_{new} =  h + 2p - f + 1$, and we want that $h_{new}$ equals $h$:
+By sliding through the image, you will get a new matrix of dimension $(h_{new}, w_{new},1)$, with $h_{new}=h-f+1$ and $w_{new}=w-f+1$. However, we usually don't want to reduce the size of our input image that fast, as we want to stack several convolutions. To ensure that the image has the same size after each convolution, zero-padding is used: we add $p$ zeros to the borders of the input image to preserve the spatial size of the input. (illustration needed, before and after zero-padding)With zero-padding, $h_{new}$ becomes: $h_{new} =  h + 2p - f + 1$, and we want that $h_{new}$ to be equal to $h$:
 \begin{equation}
 h + 2p - f + 1 = h
 \end{equation}
-Therefore, $p=\frac{f-1}{2}$.
+Therefore, $p=\frac{f-1}{2}$. Besides, zeros are used instead of any other number because you want the filter to activate on the pixels of the image only, therefore, setting the added border to zeros ensure that the resulting neuron will not be influenced by the border.
 
-A convolution extract information about the image such as edges or blotches of some color (Figure \ref{conv-ex}). The grayscale and edges filters were hardcoded but in a ConvNet setting, the weights of the filter F are learned through optimising a loss function -- in our case, a metric measuring how accurate our predictions of the emotions are. The network will learn weights that will detect features that will be most relevant to our specific task. Most of the time, more than a single convolution are used: just repeat that operation $d$ (the depth) times, to create a new tensor of dimension $(h,w,d)$. We can then apply convolutions on that new image. First layers will recognise simple features such as edges or aggregation of colors, and deeper layers might activate on faces, wheels and so on.
+A convolution extracts information about the image such as edges or blotches of some color (Figure \ref{conv-ex}). The grayscale and edges filters were hardcoded but in a ConvNet setting, the weights of the filter F are learned through optimising a loss function -- in our case, a metric measuring how accurate our predictions of the emotions are. The network will learn weights that will detect features that will be most relevant to our specific task. A convolution also has a depth parameter $d$: simply repeat the operation described above $d$ times with $d$ independent filters of the same size $(f, f, 3)$, to create a new tensor of dimension $(h,w,d)$.
+
+We can then apply convolutions on that new tensor. First layers will detect simple features such as edges or aggregation of colors, and deeper layers might recognise more complex features such as faces or wheels.
 
 \begin{figure}
 \centering
@@ -46,39 +49,38 @@ A convolution extract information about the image such as edges or blotches of s
 \end{figure}
 
 \subsection{ReLU layer}
-Stacking convolutions is nice, but as it is, we are only creature features that are linearly dependent of the input pixels: we could replace all the convolutions with a single matrix multiplication. In order to learn more interesting functions, we have to add non-linearities. Historically, the popular choice was the sigmoid function defined as:
+Stacking convolutions is nice, but as it is, we are only creature features that are linearly dependent of the input pixels: we could in fact replace all the convolutions with a single matrix multiplication. In order to learn more interesting functions, we have to add non-linearities. Historically, the popular choice was the sigmoid function defined as:
 \begin{equation}
 \text{sigmoid}(x) = \frac{1}{1+e^{-x}}
 \end{equation}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\textwidth]{Images/sigmoid.eps}
+\includegraphics[width=0.5\textwidth]{Images/sigmoid.eps}
 \caption{Sigmoid function}
 \end{figure}
 
-The sigmoid function is the simplest function having values between 0 and 1 mimicking the biological neurons `firing' to their inputs. However, when the network is learning to minimise a loss function through backpropagation, the gradients tend to vanish to zero as the sigmoid's derivative goes to zero for high negative and positive values. The most popular choice is now the Rectified Linear Unit (ReLU) defined as:
+The sigmoid function is the simplest function having values between 0 and 1 mimicking the biological neurons `firing' in reaction to their inputs. However, when the network is learning to minimise a loss function through backpropagation, the gradients tend to vanish to zero as the sigmoid's derivative goes to zero for high negative and positive values. The most popular choice of non-linearity is now the Rectified Linear Unit (ReLU) defined as:
 \begin{equation}
 \text{ReLU}(x) = \text{max}(0,x)
 \end{equation}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\textwidth]{Images/relu.eps}
-\caption{Sigmoid function}
+\includegraphics[width=0.5\textwidth]{Images/relu.eps}
+\caption{ReLU function}
 \end{figure}
 
 The ReLU's gradient is non-saturating for highly excited neurons which turns out to be a nice property to learn faster. In the network, each layer of convolution is followed by a ReLU layer, that simply applies the function $\text{max}(0,x)$ to each neuron.
 
 \newpage
 \subsection{Pooling layer}
-
 There is a lot of spatial redundancy in an image, we don't need all the pixels to be able to identify what's in a picture. For example we can perfectly identify the animal in Figure \ref{kittens} by reducing the number of pixels by two.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{Images/kittens.png}
-\caption{A kitten, and the same kitten with twice less pixels}
+\caption{A kitten, and the same kitten with half the pixels}
 \label{kittens}
 \end{figure}
 
@@ -98,12 +100,12 @@ The same idea applies to convolved images, we might not need all the neurons tha
 
 After applying max pooling to each channel, the resulting image dimension is $(\frac{h}{2}, \frac{w}{2}, d)$ and we have discarded 75\% of the neurons (as in each max-pool operation, we only keep the maximum neuron among the fours), effectively reducing the number of parameters and controlling overfitting.
 
-You could wonder why max-pooling and not average pooling (taking the mean value of the four neurons)? The convolutions allow us to see if a certain feature is in the image when a neuron fires, and we only want to know if that feature is there in a certain region. Therefore taking the max of the four neurons is sufficient to know whether that feature is there or not.
+You could wonder why max-pooling and not average pooling (taking the mean value of the four neurons)? The convolutions allow us to see if a certain feature is in the image when a neuron fires, and we only want to know if that feature is there in a certain region. Therefore taking the max of the four neurons is sufficient to know whether that feature is there or not in that particular region.
 
 In practice, after a few iterations of convolutions, inserting pooling layers in-between convolutional layers might be a good idea to control the spatial complexity of the network.
 
 \subsection{An example of convolutional network}
-Here is an example of a convolutional neural network with an input image of size $(100, 100, 3)$:
+Here is an example of a convolutional neural network with an input image of size $(224, 224, 3)$:
 
 \begin{figure}[H]
 \centering
@@ -122,14 +124,22 @@ Here is an example of a convolutional neural network with an input image of size
 After the last operation, the neurons are reshaped into a vector that can be fed to the traditional fully connected layers of neural networks.
 
 \subsection{Deep convolutional networks}
-Best results are achieved using deep convolutional networks, that is to say by stacking many layers of convolutions, ReLU, max-pool. But what exactly is `many'? Let us have a look at the main Computer Vision competition: ImageNet Large Scale Visual Recognition (ILSVR).
+Best results are achieved using deep convolutional networks, that is to say by stacking many layers of convolutions/ReLU/max-pool. But what exactly is `many'? Let us have a look at the main Computer Vision competition: ImageNet Large Scale Visual Recognition (ILSVR).
 \begin{enumerate}
 \item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed the other competitors at ILSVR 2012 by a large margin: top-5 error of 16\% compared to the runner-up with 26\%. AlexNet has 5 convolutional layers (followed by ReLU), 3 max-pool layers and 3 fully-connected layers, producing a 8-layer deep network (not counting the max-pooling as it doesn't have any parameters).
-\item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: This is the winner of ILSVR 2014 with a top-5 error of 6.7\% . This architecture used the `Inception Module' which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet and is 22 layers deep.
-\item \textbf{ResNet} \cite{resnet}: The winner of ILSVR 2015 with a top-5 error of 3.6\% thanks to an astonishing 152 layers convolutional network. This architecture features `skip connections' and has the particularity of not having a fully connected layer at the end of the network.
-
+\item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: This is the winner of ILSVR 2014 with a top-5 error of 6.7\% . This 22-layer architecture used the `Inception Module' which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet.
+\item \textbf{ResNet} \cite{resnet}: The winner of ILSVR 2015 with a top-5 error of 3.6\% thanks to an astonishing 152 layers convolutional network. This architecture features `skip connections' allowing this ultra-deep network achieve such results.
 
 (explain Inception module, talk about computational considerations (Stanford CS231n))
 \end{enumerate}
+
+\subsection{Transfer Learning}
+Training a convolutional network from scratch can be difficult as a large amount of data is needed and plenty of different architectures and hyperparameters need to be tried before finding a decent model. To circumvent that issue, you can take advantage of the pre-trained models available that learned to recognize images through near 1.2M training examples and a deep architecture that took weeks to train on multiple GPUs.
+
+More specifically, the pre-trained networks learned to recognise features on a picture that allow it to classify the latter among the 1000 classes there are on the ImageNet dataset. Those features are combined in the final fully connected layer to make a decision. Suppose that instead of classifying an image into 1000 classes we want to label it according to 6 different emotions (happy, sad, angry, scared, surprised, disgusted). The same features can be combined in a different way to let the network take a decision on the emotion label of the image.
+
+The process described above is called {\em Transfer Learning}: you chop off the last layer of the network and add your own layer given how many classes you have. You then freeze the weights of the other layers and only backpropagate through the newly created layer when training the network on your examples. If you have enough data, you can unfreeze more higher-level layers and backpropagate through them. One way to see why this works is that earlier features of ConvNets contain more generic features (such as edges or color blobs), while later features become more specific to the details of the classes present in the dataset. For example in ImageNet, there are many dog breeds and the later representational power might be used to distinguish those \cite{transfer}.
+
+We will be using Google's Inception network and fine-tune the last fully-connected layer. [an illustration would be nice].
 
 
