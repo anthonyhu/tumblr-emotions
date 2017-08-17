@@ -24,7 +24,6 @@ def download_im(search_query, start, end, dataset_dir, subdir='photos'):
     # Load data
     df = pd.read_csv(os.path.join(dataset_dir, search_query + '.csv'), encoding='utf-8')
     links = df['photo']
-    ids = df['id']
     # Create subdir if it doesn't exist
     if not tf.gfile.Exists(os.path.join(dataset_dir, subdir)):
         tf.gfile.MakeDirs(os.path.join(dataset_dir, subdir))
@@ -42,5 +41,6 @@ def download_im(search_query, start, end, dataset_dir, subdir='photos'):
                 continue
             image_file = io.BytesIO(f.read())
             im = Image.open(image_file)
-            filename = str(ids[i]) + '.jpg'
+            # The filename is the index of the image in the dataframe
+            filename = str(i) + '.jpg'
             im.convert('RGB').save(os.path.join(photos_dir, filename), 'JPEG')
