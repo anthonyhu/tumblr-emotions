@@ -29,8 +29,11 @@ import os
 import random
 import sys
 
+import numpy as np
 import tensorflow as tf
 
+from scipy.misc import imread, imresize
+from slim.nets import inception
 from datasets import dataset_utils
 
 # The number of images in the validation set.
@@ -211,3 +214,45 @@ def convert_images(dataset_dir, num_valid, photos_subdir='photos', tfrecords_sub
   #_clean_up_temporary_files(dataset_dir)
   print('\nFinished converting the dataset!')
 
+def _filenames_to_arrays(filenames, class_names_to_ids):
+    X = []
+    y = []
+    for filename in filenames:
+        im = imread(filename)
+        class_name = os.path.basename(os.path.dirname(filename))
+        class_id = class_names_to_ids[class_name]
+        image_size = inception.inception_v1.default_image_size
+        # Resize and flatten the image
+        im = imresize(im, (image_size, image_size)).reshape(-1)
+        X.append(im)
+        y.append(class_id)
+    X = np.vstack(X)
+    y = np.array(y)
+    return (X, y)
+
+def get_numpy_data(dataset_dir, num_valid, photos_subdir='photos'):
+  """Convert the photos to numpy data.
+
+  Parameters:
+    dataset_dir: The data directory.
+    photos_subdir: The subdirectory where the photos are stored.
+
+  Returns:
+    X_train: Training features.
+    X_valid: Validation features.
+    y_train: Training labels.
+    y_valid: Validation labels
+  """
+  photo_filenames, class_names = _get_filenames_and_classes(dataset_dir, photos_subdir)
+  class_names_to_ids = dict(zip(class_names, range(len(class_names))))
+
+  # Divide into train and test:
+  random.seed(_RANDOM_SEED)
+  random.shuffle(photo_filenames)
+  training_filenames = photo_filenames[num_valid:]
+  validation_filenames = photo_filenames[:num_valid]
+
+  X_train, y_train = _filenames_to_arrays(training_filenames, class_names_to_ids)
+  X_valid, y_valid = _filenames_to_arrays(validation_filenames, class_names_to_ids)
+
+  return (X_train, X_valid, y_train, y_valid)

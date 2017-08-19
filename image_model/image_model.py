@@ -6,13 +6,19 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from datasets import dataset_utils
-from datasets.convert_to_dataset import get_split
+from tensorflow.contrib import slim
+from tensorflow.contrib.slim.python.slim.learning import train_step
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
 from slim.preprocessing import inception_preprocessing
 from slim.nets import inception
-from tensorflow.contrib.slim.python.slim.learning import train_step
+from datasets import dataset_utils
+from datasets.convert_to_dataset import get_split
+from datasets.convert_images_tfrecords import get_numpy_data
 
-from tensorflow.contrib import slim
+# Seed for reproducibility
+_RANDOM_SEED = 0
 
 def download_pretrained_model(url, checkpoint_dir):
     """Download pretrained inception model and store it in checkpoint_dir.
@@ -26,7 +32,7 @@ def download_pretrained_model(url, checkpoint_dir):
     dataset_utils.download_and_uncompress_tarball(url, checkpoint_dir)
 
 def _load_batch(dataset, batch_size=32, shuffle=True, height=299, width=299, is_training=False):
-    """Loads a single batch of data. 
+    """Load a single batch of data. 
     
     Args:
       dataset: The dataset to load.
@@ -153,3 +159,22 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
             number_of_steps=num_steps)
             
     print('Finished training. Last batch loss {0:.3f}'.format(final_loss))
+
+def softmax_regression(num_valid, C):
+    """Run a softmax regression on the images.
+
+    Parameters:
+        num_valid: Size of the validation set.
+        C: Inverse of the regularization strength.
+    """
+    # Load data
+    X_train, X_valid, y_train, y_valid = get_numpy_data('data', num_valid)
+    logistic = LogisticRegression(multi_class='multinomial', solver='newton-cg',
+                                  C=C, random_state=_RANDOM_SEED)
+    print('Start training Logistic Regression.')
+    logistic.fit(X_train, y_train)
+
+    accuracy_train = accuracy_score(logistic.predict(X_train), y_train)
+    valid_accuracy = accuracy_score(logistic.predict(X_valid), y_valid)
+    print('Training accuracy: {0:.3f}'.format(accuracy_train))
+    print('Validation accuracy: {0:.3f}'.format(valid_accuracy))
