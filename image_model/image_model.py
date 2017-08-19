@@ -1,6 +1,7 @@
 """ Fine-tune a pre-trained Inception model by chopping off the last logits layer. 
 """
 import os
+import sys
 
 import numpy as np
 import tensorflow as tf
@@ -99,10 +100,6 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         tf.gfile.DeleteRecursively(train_dir)
     tf.gfile.MakeDirs(train_dir)
 
-    def compute_accuracy(logits, labels):
-        predictions = tf.cast(tf.argmax(logits, 1), tf.int32)
-        return tf.reduce_mean(tf.cast(tf.equal(predictions, tf.cast(labels, tf.int32)), tf.float32))
-
     with tf.Graph().as_default():
         tf.logging.set_verbosity(tf.logging.INFO)
         
@@ -141,6 +138,7 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
 
             acc_valid = session.run(accuracy_valid)
             print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
+            sys.stdout.flush()
             train_step_fn.step += 1
             return [total_loss, should_stop]
         

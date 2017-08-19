@@ -1,5 +1,4 @@
 import sys
-
 from datasets.download_images import download_im
 
 if __name__ == '__main__':
@@ -10,7 +9,6 @@ if __name__ == '__main__':
 
     if len(args) > 0:
         sys.stderr.write('Too many arguments given.\n')
-
     else:
         dataset_dir = 'data'
         # This might issue a warning about EXIL data corrupted

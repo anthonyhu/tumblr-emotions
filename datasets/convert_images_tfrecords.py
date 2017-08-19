@@ -173,7 +173,7 @@ def _dataset_exists(dataset_dir, photos_subdir='photos'):
   return True
 
 
-def convert_images(dataset_dir, photos_subdir='photos', tfrecords_subdir='tfrecords'):
+def convert_images(dataset_dir, num_valid, photos_subdir='photos', tfrecords_subdir='tfrecords'):
   """Downloads the photos and convert them to TFRecords.
 
   Parameters:
@@ -195,8 +195,8 @@ def convert_images(dataset_dir, photos_subdir='photos', tfrecords_subdir='tfreco
   # Divide into train and test:
   random.seed(_RANDOM_SEED)
   random.shuffle(photo_filenames)
-  training_filenames = photo_filenames[_NUM_VALIDATION:]
-  validation_filenames = photo_filenames[:_NUM_VALIDATION]
+  training_filenames = photo_filenames[num_valid:]
+  validation_filenames = photo_filenames[:num_valid]
 
   # First, convert the training and validation sets.
   _convert_dataset('train', training_filenames, class_names_to_ids,
