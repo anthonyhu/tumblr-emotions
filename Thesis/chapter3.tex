@@ -123,7 +123,7 @@ Here is an example of a convolutional neural network with an input image of size
 
 After the last operation, the neurons are reshaped into a vector that can be fed to the traditional fully connected layers of neural networks.
 
-\subsection{Deep convolutional networks}
+\section{Deep convolutional networks}
 Best results are achieved using deep convolutional networks, that is to say by stacking many layers of convolutions/ReLU/max-pool. But what exactly is `many'? Let us have a look at the main Computer Vision competition: ImageNet Large Scale Visual Recognition (ILSVR).
 \begin{enumerate}
     \item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed 
@@ -137,7 +137,7 @@ Best results are achieved using deep convolutional networks, that is to say by s
 (explain Inception module, talk about computational considerations (Stanford CS231n))
 \end{enumerate}
 
-\subsection{Transfer Learning}
+\section{Transfer Learning}
 Training a convolutional network from scratch can be difficult as a large amount of data is needed and plenty of different architectures and hyperparameters need to be tried before finding a decent model. To circumvent that issue, you can take advantage of the pre-trained models available that learned to recognize images through near 1.2M training examples and a deep architecture that took weeks to train on multiple GPUs.
 
 More specifically, the pre-trained networks learned to recognise features on a picture that allow it to classify the latter among the 1000 classes there are on the ImageNet dataset. Those features are combined in the final fully connected layer to make a decision. Suppose that instead of classifying an image into 1000 classes we want to label it according to 6 different emotions (happy, sad, angry, scared, surprised, disgusted). The same features can be combined in a different way to let the network take a decision on the emotion label of the image.
@@ -146,14 +146,16 @@ The process described above is called {\em Transfer Learning}: you chop off the 
 
 We will be using Google's Inception network and fine-tune the last fully-connected layer.
 
-\subsection{Google Inception network}
+\section{Google Inception network}
+
+\subsection{Motivation}
 After AlexNet proved that convolutional networks outperformed traditional machine learning models, the trend to achieve even better results was to build wider (more units per layer) and deeper (more layers) networks and to add dropout to address overfitting. However, bigger networks are more expensive to train (more parameters) and could not be usable for real-time prediction if a forward-pass takes more than a second for instance. Moreover, if the increased capacity is not used efficiently, for example if most added weights are close to zero, then the network added depth will be completely wasted.
 
 To address this problem, we could replace the fully connected layers by sparse ones, even inside convolutions \cite{googlenet}. Not only would it mimic more closely biological systems, but it would also have more theoretical ground thanks to the work of Arora et al. \cite{arora}. They proved that if the probability distribution of a dataset can be represented by a large, very sparse neural network, then it's possible to build the optimal network layer after layer by clustering highly correlated neurons of the preceding layer.
 
 Current networks architectures are not using sparse layers as the libraries are heavily optimised for dense matrix multiplication. Training sparse layers would incur considerable overhead that are not handled by today's computing infrastructures. However, the Inception module is an elegant solution to add more expressiveness to your network while keeping the number of parameters low. 
 
-\textbf{Inception module:}
+\subsection{Inception module}
 At each layer, you'd normally be facing the dilemma of choosing between $1\times 1$, $3\times 3$, $5\times5$ convolution or max-pooling:
 
 \begin{figure}[H]
@@ -184,7 +186,8 @@ That's more than twenty times faster! The number of parameters is also reduced b
     \caption{Inception module \cite{googlenet}}
 \end{figure}
 
-And the complete GoogleNet architecture being:
+\subsection{GoogleNet}
+The complete GoogleNet architecture is:
 
 \begin{figure}[H]
     \centering
@@ -197,7 +200,7 @@ The `\#$3\times3$ reduce' and `\#$5\times5$ reduce' refer to the dimensionality 
 In our model, we got rid of the last linear layer and replaced it with another linear layer of size $(1, 1, 6)$ for the 6 different emotions.
 
 \newpage
-\subsection{Results}
+\section{Results}
 Are the images enough to accurately determine the emotion conveyed by the user? We tried several machine learning models on the raw images, that were resized to a fixed size $(224, 224, 3)$. For now (need more time to train more data), the train set has 100 000 images and the test set has 20 000 images.
 \begin{itemize}
     \item \textbf{Softmax regression}: with $\text{L}_2$ regularisation of $0.01$.
