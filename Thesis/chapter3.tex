@@ -1,12 +1,12 @@
-\chapter{Visual recognition}
+\chapter{Visual Recognition}
 The pictures are valuable to accurately determine the emotion of the user. For instance, happy photos might contain sunny landscapes and sandy beaches while sad pictures might contain darker colors. To analyse the images, we'll use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks. First we'll explain how they work and then we'll dive into the architecture we've used for deep sentiment analysis.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Convolutional neural networks}
+\section{Convolutional Neural Networks}
 A convolutional neural network, often called ConvNet, can be seen as a simulation of the human visual cortex, that is to say an aggregation of plenty of receptive fields. (some illustrations might be helpful here)
 
-\subsection{Convolutional layer}
+\subsection{Convolutional Layer}
 Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and 3 representing the number of channels (red, blue, green). If you simply flatten that image and transform it into a vector of size $h\times h \times 3$ and feed that vector to a neural network, you'll get average results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
 \begin{itemize}
     \item Each convolution is described by a filter F of size $(f, f, 3)$, $f$ usually being equal to 3, 5, or 7.
@@ -48,7 +48,7 @@ We can then apply convolutions on that new tensor. First layers will detect simp
 \label{conv-ex}
 \end{figure}
 
-\subsection{ReLU layer}
+\subsection{ReLU Layer}
 Stacking convolutions is nice, but as it is, we are only creature features that are linearly dependent of the input pixels: we could in fact replace all the convolutions with a single matrix multiplication. In order to learn more interesting functions, we have to add non-linearities. Historically, the popular choice was the sigmoid function defined as:
 \begin{equation}
 \text{sigmoid}(x) = \frac{1}{1+e^{-x}}
@@ -74,7 +74,7 @@ The sigmoid function is the simplest function having values between 0 and 1 mimi
 The ReLU's gradient is non-saturating for highly excited neurons which turns out to be a nice property to learn faster. In the network, each layer of convolution is followed by a ReLU layer, that simply applies the function $\text{max}(0,x)$ to each neuron.
 
 \newpage
-\subsection{Pooling layer}
+\subsection{Pooling Layer}
 There is a lot of spatial redundancy in an image, we don't need all the pixels to be able to identify what's in a picture. For example we can perfectly identify the animal in Figure \ref{kittens} by reducing the number of pixels by two.
 
 \begin{figure}[H]
@@ -104,7 +104,7 @@ You could wonder why max-pooling and not average pooling (taking the mean value 
 
 In practice, after a few iterations of convolutions, inserting pooling layers in-between convolutional layers might be a good idea to control the spatial complexity of the network.
 
-\subsection{An example of convolutional network}
+\subsection{An Example of Convolutional Network}
 Here is an example of a convolutional neural network with an input image of size $(224, 224, 3)$:
 
 \begin{figure}[H]
@@ -123,7 +123,7 @@ Here is an example of a convolutional neural network with an input image of size
 
 After the last operation, the neurons are reshaped into a vector that can be fed to the traditional fully connected layers of neural networks.
 
-\section{Deep convolutional networks}
+\section{Deep Convolutional Networks}
 Best results are achieved using deep convolutional networks, that is to say by stacking many layers of convolutions/ReLU/max-pool. But what exactly is `many'? Let us have a look at the main Computer Vision competition: ImageNet Large Scale Visual Recognition (ILSVR).
 \begin{enumerate}
     \item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed 
@@ -146,7 +146,7 @@ The process described above is called {\em Transfer Learning}: you chop off the 
 
 We will be using Google's Inception network and fine-tune the last fully-connected layer.
 
-\section{Google Inception network}
+\section{Google Inception Network}
 
 \subsection{Motivation}
 After AlexNet proved that convolutional networks outperformed traditional machine learning models, the trend to achieve even better results was to build wider (more units per layer) and deeper (more layers) networks and to add dropout to address overfitting. However, bigger networks are more expensive to train (more parameters) and could not be usable for real-time prediction if a forward-pass takes more than a second for instance. Moreover, if the increased capacity is not used efficiently, for example if most added weights are close to zero, then the network added depth will be completely wasted.
@@ -155,7 +155,7 @@ To address this problem, we could replace the fully connected layers by sparse o
 
 Current networks architectures are not using sparse layers as the libraries are heavily optimised for dense matrix multiplication. Training sparse layers would incur considerable overhead that are not handled by today's computing infrastructures. However, the Inception module is an elegant solution to add more expressiveness to your network while keeping the number of parameters low. 
 
-\subsection{Inception module}
+\subsection{Inception Module}
 At each layer, you'd normally be facing the dilemma of choosing between $1\times 1$, $3\times 3$, $5\times5$ convolution or max-pooling:
 
 \begin{figure}[H]
