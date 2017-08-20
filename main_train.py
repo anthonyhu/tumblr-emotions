@@ -1,8 +1,8 @@
 import sys
 import tensorflow as tf
 from time import time
-from image_model.image_model import download_pretrained_model
-from image_model.image_model import fine_tune_model
+from image_model.im_model import download_pretrained_model
+from image_model.im_model import fine_tune_model
 
 if __name__ == '__main__':
     args = sys.argv[1:]

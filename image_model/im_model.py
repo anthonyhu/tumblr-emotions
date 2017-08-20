@@ -12,7 +12,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 from slim.preprocessing import inception_preprocessing
-from slim.nets import inception
+#from slim.nets import inception
+from image_model import inception_v1
 from datasets import dataset_utils
 from datasets.convert_to_dataset import get_split
 from datasets.convert_images_tfrecords import get_numpy_data
@@ -110,7 +111,7 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         tf.logging.set_verbosity(tf.logging.INFO)
         
         dataset = get_split('train', dataset_dir)
-        image_size = inception.inception_v1.default_image_size
+        image_size = inception_v1.default_image_size
         images, _, labels = _load_batch(dataset, height=image_size, width=image_size)
 
         # Load validation data
@@ -119,9 +120,10 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
                                                     height=image_size, width=image_size)
         
         # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(inception.inception_v1_arg_scope()):
-            logits, _ = inception.inception_v1(images, num_classes=dataset.num_classes, is_training=True)
-            logits_valid, _ = inception.inception_v1(images_valid, num_classes=dataset_valid.num_classes, is_training=False)
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, is_training=True)
+            logits_valid, _ = inception_v1.inception_v1(images_valid, num_classes=dataset_valid.num_classes, 
+                                           is_training=False, reuse=True)
             
         # Specify the loss function:
         one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
@@ -132,7 +134,7 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         tf.summary.scalar('losses/Total_Loss', total_loss)
       
         # Specify the optimizer and create the train op:
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+        optimizer = tf.train.AdamOptimizer(learning_rate=1e-5)
         train_op = slim.learning.create_train_op(total_loss, optimizer)
 
         # Accuracy metrics
