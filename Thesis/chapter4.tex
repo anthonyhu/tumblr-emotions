@@ -13,7 +13,7 @@ With only the image, it's unclear whether the user is sad or disgusted. Only be 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Word embedding}
+\section{Word Embedding}
 One way to map the text into numbers would be to use a dictionary that maps each word in the vocabulary (containing all the words of every Tumblr posts) to an integer. Then, you could transform any word into an one-hot vector, a vector of size the number of words in the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance). A major drawback is that this will cause data sparsity as the vocabulary size can be huge. For example, the number of 5-word sentences with a vocabulary size of 1000, is $1000^5=10^{15}$. This problem is specific to text as image and audio processing systems train on rich high-dimensional data (pixel intensities for images and spectral densities for audio), as shown by Figure \ref{comparison-text}.
 
 \begin{figure}[H]
@@ -25,13 +25,13 @@ One way to map the text into numbers would be to use a dictionary that maps each
 
 Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close as `tree' as it is with `cat'. Ideally, you would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how word embedding works: every word is projected into a highly dimensional space that keep semantic relationships. Therefore, what the model has learned about dogs can be used when a cat is encountered. 
 
-\subsection{Word2Vec overview}
+\subsection{Word2Vec Overview}
 The Word2Vec model by Mikolov et al. \cite{word2vec} is an efficient implementation of word embedding and works as follow:
-Suppose you have a sentence: ``the ants in the garden". You can break that sentence in (context, target) pairs where the context are the words surrounding the target word. For example, if you take a context with a window of 1, you get the follow pairs: ([the, in], ants), ([ants, the], in), ([in, garden], the) [we omitted the pairs where the context wasn't of size 2]. You will then train a model to predict the target word given the context, and the weights of the model will give the word embedding (this will become clearer shortly). This model is called the Continuous Bag-of-Words model, and Word2Vec also comes in another flavor called the Skip-Gram model.
+Suppose you have a sentence: `the ants in the garden'. You can break that sentence in (context, target) pairs where the context are the words surrounding the target word. For example, if you take a context with a window of 1, you get the follow pairs: ([the, in], ants), ([ants, the], in), ([in, garden], the) [we omitted the pairs where the context wasn't of size 2]. You will then train a model to predict the target word given the context, and the weights of the model will give the word embedding (this will become clearer shortly). This model is called the Continuous Bag-of-Words model, and Word2Vec also comes in another flavor called the Skip-Gram model.
 
 In the Skip-Gram model, you will predict the context given the target word, creating more pairs as for instance ([the, in], ants) are split into two training instances: (ants, the), (ants, in). The Continuous Bag-of-Words model smooth over the the distributional information by using the whole context, and works well on smaller datasets, but by breaking the (context, target) pair into more observations, the Skip-Gram model tends to perform better on larger datasets, and that's the model we will stick on from now on.
 
-\subsection{Skip-Gram model}
+\subsection{Skip-Gram Model}
 The model is a neural network with one hidden layer and its objective is to predict the context word given the target. The input of the network will be a target word represented as a one-hot vector, of size say 10,000 (that's the vocabulary size) and the output will also be a vector of size 10,000 giving the probability distribution of the context word. Here is the architecture of the model:
 
 \begin{figure}[H]
@@ -48,34 +48,83 @@ There is no activation function in the hidden layer, but output neurons use soft
     \caption{Where the embedding comes from \cite{word2vec-architecture}}
 \end{figure}
 
-To learn those weights, the network is minimising the cross-entropy loss given a (target word, context word) = $(w_t, c)$:
+To learn those weights, the network is minimising the cross-entropy loss given a (target word, context word) = $(w_t, w_c)$:
 \begin{align}
-    \text{J}_{\text{CE}}(w_t, c)   &=  -\text{log}P(w_t | c) \nonumber\\
-    &= -\text{log}\{\text{softmax}(w_t, c)\}\nonumber\\
-    &= -\text{log}\left(\frac{\text{exp}\{\text{score}(w_t, c)\}}{\sum_{\text{Word w' in Vocab}}\text{exp}\{\text{score}(w', c)\}} \right)
+    \text{J}_{\text{CE}}(w_t, w_c)   &=  -\text{log}~P(w_c | w_t) \nonumber\\
+    &= -\text{log}~\{\text{softmax}(w_c, w_t)\}\nonumber\\
+    &= -\text{log}\left(\frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\sum_{\text{Word w' in Vocab}}\text{exp}\{\text{score}(w_c, w')\}} \right)
+    \label{cross-entropy}
 \end{align}
+
+With $\text{score}(w_c, w_t)$ being the element in position $w_c$ in the output layer (right before the softmax activation function).
 
 \subsection{Intuition}
 In this model, two words that have similar contexts should output similar probability distribution. One way to produce that is to simply learn a similar word embedding for these two words. Therefore, words with similar context will have a similar vector representation which is exactly what we wanted.
 
 Which words have similar contexts? Synonyms are a good example: `brave' and `fearless' are two words that must appear in similar contexts. The same applies for words that are related such as `physics' and `thermodynamics' or words with the same stem `apples' and 'apple'. 
 
-\section{Training the model}
+\section{Training the Model}
 Training the network described above involves, with a vocabulary size of 10 000: 10 000$\times300$=3M parameters for the hidden layer and $300\times$10 000=3M for the output layer. In fact, the actual Word2Vec model contain 3M words, the number of parameters is thus 2$\times$3M$\times$300=1.8B. That's a huge neural network that will need a really large training set to train those parameters, which is not feasible without a few tweaks.
 
 \subsection{Negative Sampling}
-When training the model with gradient descent, each backward pass will update all the 1.8B parameters of the model. Negative sampling addresses this problem by only updating a fraction of the parameters.
+When training the model with gradient descent, each backward pass will update all the parameters of the model. Negative sampling addresses this problem by only updating a fraction of the parameters.
 
 For a given (target, context word) pair, we want the output of the model to be 1 on the context word and 0s for all the other words. With negative sampling, we'll instead randomly select a small subset of `negative samples' (a word we want the network to output a 0 for) to update the weights for. The paper by T. Mikolov et al. \cite{word2vec2} states that 5-20 negative samples for small datasets and 2-5 for large datasets achieve good results.
 
 More specifically, the negative samples are selected using a `unigram distribution' with more frequent words more likely to be selected. The probability to select a word $w_i$ is simply its frequency $f_i$ to the power 3/4 (chosen empirically) divided by the sum of weights of all the other words:
 \begin{equation}
-P(w_i) = \frac{f_i^{3/4}}{\sum_{j=1}^V f_j^{3/4}}
+    P(w_i) = \frac{f_i^{3/4}}{\sum_{j=1}^V f_j^{3/4}}
 \end{equation}
 
 If we select 5 negative samples, then in the output layer those 5 words and the context word will be updated, and they each have 300 parameters (the embedding size) meaning that only 1800 parameters will be updated among the 0.9B parameters in the output layer, that's only 0.0002\% of the parameters.
 
 In the hidden layer, only the weights of the input word (300 parameters) will be updated, but that's always the case regardless of negative sampling as the one-hot vector zero-out every weight in the hidden layer that does not belong to the input word.
+
+\subsection{Negative Sampling, with Maths}
+The loss function (\ref{cross-entropy}) has a normalising denominator that is expensive to compute, and is the direct cause of why all the parameters would be updated. One workaround is to approximate that denominator with something cheap to compute. This approximation is only used when training as during inference, the softmax function has to be computed to obtain a proper probability distribution.
+
+http://ruder.io/word-embeddings-softmax/ \\
+https://www.tensorflow.org/tutorials/word2vec
+
+\subsection{Word Pairs and Phrases}
+`Times Higher Education' has a different meaning than `times', `higher' and `education' taken separately, it's therefore sensible to add that kind of phrases in the vocabulary. Ideally, we would like to also not add word pairs such as `that is' or `and are' to the vocabulary as they make more sense being separated. We want to group words that are frequent together but infrequent in general, to do so, we use the following scoring function of two words $w_i$ and $w_j$:
+\begin{equation}
+    \text{score}(w_i, w_j) = \frac{\text{count}(w_iw_j) - \delta}{\text{count}(w_i)\times \text{count}(w_j)}
+\end{equation}
+With: 
+\begin{itemize}[topsep=0pt]
+    \item $\text{count}(w_i)$ the number of time the word $w_i$ appear in the corpus (all the training data).
+    \item $\text{count}(w_iw_j)$ the number of occurrence of both $w_i$ and $w_j$ in the corpus. 
+    \item $\delta$ a discounting coefficient to prevent too many phrases made up of very infrequent words.
+\end{itemize}
+
+The pairs $(w_i, w_j)$ with a score above a threshold are then added to the vocabulary. Several passes on the training data are made to make longer phrases such as `Times Higher Education' (usually 2-4 passes with a decreasing threshold value after each pass).
+
+\subsection{Subsampling of Frequent Words}
+If we look again at the example `the ants in the garden', the training instances will contain (ants, the) and (garden, the). The word `the' doesn't help a lot at understanding the usual context of the words `ant' and `garden' as it appears in virtually every noun. Furthermore, `the' will have far too many training instances to get a decent vector representation of the word.
+
+To address these problems, subsampling was used: each word in the corpus has a probability to be deleted relative to its frequency. Therefore, if we have a window size of 15 and the word `the' is deleted, then this word will not appear in the context of the remaining words. Also, we now have 15 times fewer training instances containing `the'.
+
+The probability of keeping a word $w_i$ with frequency $f_i$ is:
+\begin{equation}
+    P(w_i) = \frac{t}{f_i} + \sqrt{\frac{t}{f_i}}
+    \label{subsampling}
+\end{equation}
+With $t$ a parameter controlling how aggressive subsampling is, smaller value of $t$ means more subsampling. The recommended value of $t$ is $1\mathrm{e}{-5}$. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/subsampling_prob.eps}
+    \caption{Subsampling probability graph}
+\end{figure}
+
+Note that the formula (\ref{subsampling}) is different from the one in \cite{word2vec2}, but we decided to keep (\ref{subsampling}) as it was used in the actual C implementation of Word2Vec. Note that:
+\begin{itemize}
+    \item $P(w_i) = 1.0$ for $f_i\leq2.6\mathrm{e}{-5}$, meaning that subsampling will only affect words that represent more than 0.0026\% of the words.
+    \item $P(w_i) = 0.5$ for $f_i=7.5\mathrm{e}{-5}$, any word representing 0.0075\% of the words will have a fifty-fifty chance of being dropped.
+\end{itemize}
+
+
 
 
 
