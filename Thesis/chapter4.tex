@@ -162,13 +162,14 @@ Giving the following final loss function:
 \subsection{Word Pairs and Phrases}
 `Times Higher Education' has a different meaning than `times', `higher' and `education' taken separately, it's therefore sensible to add that kind of phrases in the vocabulary. Ideally, we would like to also not add word pairs such as `that is' or `and are' to the vocabulary as they make more sense being separated. We want to group words that are frequent together but infrequent in general, to do so, we use the following scoring function of two words $w_i$ and $w_j$:
 \begin{equation}
-    \text{score}(w_i, w_j) = \frac{\text{count}(w_iw_j) - \delta}{\text{count}(w_i)\times \text{count}(w_j)}
+    \text{score}(w_i, w_j) = \frac{\text{count}(w_iw_j) - \delta}{\text{count}(w_i)\times \text{count}(w_j)}\times |W|
 \end{equation}
 With: 
 \begin{itemize}[topsep=0pt]
     \item $\text{count}(w_i)$ the number of time the word $w_i$ appear in the corpus (all the training data).
     \item $\text{count}(w_iw_j)$ the number of occurrence of both $w_i$ and $w_j$ in the corpus. 
     \item $\delta$ a discounting coefficient to prevent too many phrases made up of very infrequent words.
+    \item $|W|$ the training set size, in order to make the threshold more independent of the training size.
 \end{itemize}
 
 The pairs $(w_i, w_j)$ with a score above a threshold are then added to the vocabulary. Several passes on the training data are made to make longer phrases such as `Times Higher Education' (usually 2-4 passes with a decreasing threshold value after each pass).
@@ -183,7 +184,7 @@ The probability of keeping a word $w_i$ with frequency $f_i$ is:
     P(w_i) = \frac{t}{f_i} + \sqrt{\frac{t}{f_i}}
     \label{subsampling}
 \end{equation}
-With $t$ a parameter controlling how aggressive subsampling is, smaller value of $t$ means more subsampling. The recommended value of $t$ is $1\mathrm{e}{-5}$. 
+With $t$ a parameter controlling how aggressive subsampling is, smaller value of $t$ means more subsampling. 
 
 \begin{figure}[H]
     \centering
@@ -191,14 +192,23 @@ With $t$ a parameter controlling how aggressive subsampling is, smaller value of
     \caption{Subsampling probability graph}
 \end{figure}
 
-Note that the formula (\ref{subsampling}) is different from the one in \cite{word2vec2}, but we decided to keep (\ref{subsampling}) as it was used in the actual C implementation of Word2Vec. Note that:
+Note that the formula (\ref{subsampling}) is different from the one in \cite{word2vec2}, but we decided to keep (\ref{subsampling}) as it was used in the actual C implementation of Word2Vec. Note that if $t=1\mathrm{e}{-3}$
 \begin{itemize}
-    \item $P(w_i) = 1.0$ for $f_i\leq2.6\mathrm{e}{-5}$, meaning that subsampling will only affect words that represent more than 0.0026\% of the words.
-    \item $P(w_i) = 0.5$ for $f_i=7.5\mathrm{e}{-5}$, any word representing 0.0075\% of the words will have a fifty-fifty chance of being dropped.
+    \item $P(w_i) = 1.0$ for $f_i\leq0.0026$, meaning that subsampling will only affect words that represent more than 0.26\% of the words.
+    \item $P(w_i) = 0.5$ for $f_i=0.0075$, any word representing 0.75\% of the words will have a fifty-fifty chance of being dropped.
 \end{itemize}
 
-\subsection{Word2Vec training}
+\subsection{Word2Vec pre-trained model}
 
+For our task of emotion prediction, we will be using a pre-trained model to convert the text in Tumblr posts into rich high-dimensional vectors. The model was trained on Google News dataset (aggregation of news from all around the world) containing about 100 billion words. Each word in the vocabulary (3 million words) are embedded into a 300 dimensional vector. 
+
+The skip-gram model had the following parameters:
+\begin{itemize}
+    \item Context window size of 10.
+    \item 5 negative examples for Negative Sampling.
+    \item In Word Pairs and Phrases, $\delta$ is equal to 100, and the threshold is set to 100. The number of passes was not found [need to look].
+    \item Subsampling threshold of $1\mathrm{e}{-3}.$
+\end{itemize}
 
 
 
