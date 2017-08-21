@@ -81,10 +81,83 @@ If we select 5 negative samples, then in the output layer those 5 words and the 
 In the hidden layer, only the weights of the input word (300 parameters) will be updated, but that's always the case regardless of negative sampling as the one-hot vector zero-out every weight in the hidden layer that does not belong to the input word.
 
 \subsection{Negative Sampling, with Maths}
-The loss function (\ref{cross-entropy}) has a normalising denominator that is expensive to compute, and is the direct cause of why all the parameters would be updated. One workaround is to approximate that denominator with something cheap to compute. This approximation is only used when training as during inference, the softmax function has to be computed to obtain a proper probability distribution.
+The loss function (\ref{cross-entropy}) has a normalising denominator that is expensive to compute, and is the direct cause of why all the parameters would be updated. We'd like to instead use an approximation with a loss cheaper to compute. This approximation is only used when training as during inference, the softmax function has to be computed to obtain a proper probability distribution.
 
-http://ruder.io/word-embeddings-softmax/ \\
-https://www.tensorflow.org/tutorials/word2vec
+Instead of discriminating the context word $w_c$ from all the other words in the vocabulary, we'll sample $k$ words $\tilde{w}_1, \tilde{w}_2, ..., \tilde{w}_k$ from a noise distribution $Q$, the unigram distribution, that we'll discriminate from $w_c$, as shown in Figure \ref{discri}.
+
+\begin{figure}[H]
+    \begin{subfigure}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{Images/discri-softmax.png}
+        \caption{Softmax loss}
+    \end{subfigure}
+    \begin{subfigure}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{Images/discri-noise.png}
+        \caption{Negative Sampling loss}
+    \end{subfigure}
+    \caption{Comparison of the two loss functions}
+    \label{discri}
+\end{figure}
+
+The new binary classification task has $w_c$ as positive examples $(y=1)$ and all the noise samples $\tilde{w}_1, \tilde{w}_2, ..., \tilde{w}_k$  as negative examples $y=0$. The loss function, with a pair $(w_t, w_c)$, is:
+\begin{equation}
+    \text{J}_{\text{NEG}}(w_t, w_c)  = -[\text{log}~P(y=1| w_c, w_t) + k\mathbb{E}_{\tilde{w}\sim Q}[\text{log}~P(y=0|\tilde{w}, w_t]]
+\end{equation}
+
+Calculating the expectation $\mathbb{E}_{\tilde{w}\sim Q}$ would involve summing over all the vocabulary to compute the probability normalising constant, which is exactly what we wanted to avoid in the first place. That's why we will instead use a Monte Carlo approximation with our noise samples:
+\begin{align}
+    \text{J}_{\text{NEG}}(w_t, w_c)  &= -\left[\text{log}~P(y=1| w_c, w_t) + k\sum_{j=1}^{k}\frac{1}{k}\text{log}~P(y=0|\tilde{w}_j, w_t]\right]\nonumber \\
+     &= -\left[\text{log}~P(y=1| w_c, w_t) + \sum_{j=1}^k\text{log}~P(y=0|\tilde{w}_j, w_t)\right]
+\end{align}
+
+We still haven't a proper derivation of the probability $P(y=1| w_c, w_t)$. Note that for each context word $w_c$ given its target word $w_t$, we're generating $k$ noise samples from a distribution $Q$. There are two distributions at stake: the distribution $P_{\text{train}}$ of the context word $w_c$ given $w_t$ which is simply the softmax computed earlier:
+\begin{equation}
+    P_{\text{train}}(w_c|w_t) = \text{softmax}(w_c, w_t)
+\end{equation}
+And the unigram distribution $Q$ to sample the noise:
+\begin{equation}
+    Q(w) = \frac{f_i^{3/4}}{\sum_{j=1}^V f_j^{3/4}}
+\end{equation}
+
+The probability to obtain a positive example is simply a weighted probability of seeing an example from $P_{\text{train}}$:
+\begin{align}
+    P(y=1| w_c, w_t) &= \frac{\frac{1}{k+1}P_{\text{train}}(w_c|w_t)}{\frac{1}{k+1}P_{\text{train}}(w_c|w_t) + \frac{k}{k+1}Q(w_c)}\nonumber \\
+     &= \frac{P_{\text{train}}(w_c|w_t)}{P_{\text{train}}(w_c|w_t) + kQ(w_c)}
+\end{align}
+
+Therefore we also have:
+\begin{equation}
+    P(y=0| w_c, w_t) = \frac{kQ(w_c)}{P_{\text{train}}(w_c|w_t) + kQ(w_c)}
+\end{equation}
+
+Computing $P_{\text{train}}(w_c|w_t)$ remains expensive as it involves the softmax normalising factor $Z(w_c)$:
+\begin{align}
+    P_{\text{train}}(w_c|w_t) &= \frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\sum_{\text{Word w' in Vocab}}\text{exp}\{\text{score}(w_c, w')\}} \nonumber \\
+     &= \frac{\text{exp}\{\text{score}(w_c, w_t)\}}{Z(w_c)}
+\end{align}
+
+The trick to avoid computing $Z(w_c)$ is to simply consider it as another parameter the model has to learn. Mnih and Teh \cite{nce} actually set the parameter to 1 as they report that it doesn't affect the performance. This statement was bolstered by Zoph et al. \cite{nce2} who found that the parameter was close to 1 with a low variance. Setting $Z(w_c)$ to 1 gives:
+\begin{equation}
+    P(y=1| w_c, w_t) = \frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\text{exp}\{\text{score}(w_c, w_t)\} + kQ(w_c)}
+\end{equation}
+
+The loss function becomes:
+\begin{equation}
+    \text{J}_{\text{NEG}}(w_t, w_c)  = -\left[\text{log}~\frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\text{exp}\{\text{score}(w_c, w_t)\} + kQ(w_c)} + \sum_{j=1}^k\text{log}~\frac{kQ(w_c)}{\text{exp}\{\text{score}(w_c, w_t)\} + kQ(w_c)}\right]
+\end{equation}
+
+Actually, this loss function is not quite Negative Sampling, but instead what we call Noise Contrastive Estimation (NCE), Negative Sampling has a further simplification we'll discuss shortly. Mnih and Teh \cite{nce} proved that as the number of noise samples $k$ increases, the gradient of the derivative of the NCE goes toward the softmax function. In their paper, they also state that 25 samples are enough to match the performance of the softmax, but with an increased speed of 45.
+
+The remaining expensive term to compute in the loss function is $kQ(w_c)$, as it involves computing the unigram distribution over all the vocabulary. This isn't as expensive as the normalising factor $Z(w_c)$ as the noise distribution only need to be computed once and stored in a matrix during the whole training. However, in Negative Sampling, this most expensive term $kQ(w_c)$ is set to 1 \cite{word2vec2}. This is actually true when $k=V$ and $Q$ is an uniform distribution.	 Now $P(y=1| w_c, w_t)$ is actually a sigmoid function:
+\begin{equation}
+    P(y=1| w_c, w_t) = \frac{1}{1 + \text{exp}\{-\text{score}(w_c, w_t)\}}
+\end{equation}
+
+Giving the following final loss function:
+\begin{equation}
+    \text{J}_{\text{NEG}}(w_t, w_c)  = -\left[\text{log}~\frac{1}{1 + \text{exp}\{-\text{score}(w_c, w_t)\}} + \sum_{j=1}^k\text{log}~\frac{1}{1 + \text{exp}\{\text{score}(w_c, w_t)\}}\right]
+\end{equation}
 
 \subsection{Word Pairs and Phrases}
 `Times Higher Education' has a different meaning than `times', `higher' and `education' taken separately, it's therefore sensible to add that kind of phrases in the vocabulary. Ideally, we would like to also not add word pairs such as `that is' or `and are' to the vocabulary as they make more sense being separated. We want to group words that are frequent together but infrequent in general, to do so, we use the following scoring function of two words $w_i$ and $w_j$:
@@ -124,6 +197,7 @@ Note that the formula (\ref{subsampling}) is different from the one in \cite{wor
     \item $P(w_i) = 0.5$ for $f_i=7.5\mathrm{e}{-5}$, any word representing 0.0075\% of the words will have a fifty-fifty chance of being dropped.
 \end{itemize}
 
+\subsection{Word2Vec training}
 
 
 
