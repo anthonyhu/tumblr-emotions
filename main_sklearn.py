@@ -1,7 +1,7 @@
 import sys
 
 from time import time
-from image_model.image_model import softmax_regression
+from image_model.im_model import softmax_regression
 
 if __name__ == '__main__':
 	args = sys.argv[1:]

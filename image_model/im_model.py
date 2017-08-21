@@ -144,6 +144,14 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         def train_step_fn(session, *args, **kwargs):
             total_loss, should_stop = train_step(session, *args, **kwargs)
 
+            #variables_to_print = ['InceptionV1/Conv2d_2b_1x1/weights:0', 'InceptionV1/Mixed_4b/Branch_3/Conv2d_0b_1x1/weights:0',
+             #                     'InceptionV1/Logits/Conv2d_0c_1x1/weights:0']
+            #for v in slim.get_model_variables():
+             #   if v.name in variables_to_print:
+              #      print(v.name)
+               #     print(session.run(v))
+                #    print('\n')
+
             acc_valid = session.run(accuracy_valid)
             print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
             sys.stdout.flush()
