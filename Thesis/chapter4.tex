@@ -198,7 +198,7 @@ Note that the formula (\ref{subsampling}) is different from the one in \cite{wor
     \item $P(w_i) = 0.5$ for $f_i=0.0075$, any word representing 0.75\% of the words will have a fifty-fifty chance of being dropped.
 \end{itemize}
 
-\subsection{Word2Vec pre-trained model}
+\subsection{Word2Vec Pre-Trained Model}
 
 For our task of emotion prediction, we will be using a pre-trained model to convert the text in Tumblr posts into rich high-dimensional vectors. The model was trained on Google News dataset (aggregation of news from all around the world) containing about 100 billion words. Each word in the vocabulary (3 million words) are embedded into a 300 dimensional vector. 
 
@@ -210,6 +210,10 @@ The skip-gram model had the following parameters:
     \item Subsampling threshold of $1\mathrm{e}{-3}.$
 \end{itemize}
 
+\subsection{Results}
+Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space [Elaborate on mean embedding].
+
+The network architecture is straight-forward as a the output softmax layer directly follows the mean embedding [illustration required]. This model achieves \textbf{55\%} accuracy on the test set. This is not bad at all, but note that the word order is completely lost! The order can be preserved using Recurrent Neural Networks, which is our next section.
 
 
 
