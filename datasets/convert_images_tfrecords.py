@@ -221,6 +221,7 @@ def _filenames_to_arrays(filenames, class_names_to_ids):
         im = imread(filename)
         class_name = os.path.basename(os.path.dirname(filename))
         class_id = class_names_to_ids[class_name]
+        # Might need different size as 224 is quite large
         image_size = inception.inception_v1.default_image_size
         # Resize and flatten the image
         im = imresize(im, (image_size, image_size)).reshape(-1)
