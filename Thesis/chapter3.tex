@@ -4,17 +4,17 @@ The pictures are valuable to accurately determine the emotion of the user. For i
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Convolutional Neural Networks}
-A convolutional neural network, often called ConvNet, can be seen as a simulation of the human visual cortex, that is to say an aggregation of plenty of receptive fields. (some illustrations might be helpful here)
+A convolutional neural network, often called ConvNet, can be seen as a computer simulating the human visual cortex, that is to say an aggregation of plenty of receptive fields. (some illustration might be helpful here)
 
 \subsection{Convolutional Layer}
-Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and 3 representing the number of channels (red, blue, green). If you simply flatten that image and transform it into a vector of size $h\times h \times 3$ and feed that vector to a neural network, you'll get average results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
+Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and {\em3} representing the number of channels -- red, blue and green. If you simply flatten that image and transform it into a vector of size $h\times w \times 3$ and feed that vector to a neural network, you'll get not-so-good results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
 \begin{itemize}
     \item Each convolution is described by a filter F of size $(f, f, 3)$, $f$ usually being equal to 3, 5, or 7.
     \item Position the filter on the upper left of the image and element-wise multiply with the filter, then sum those numbers to obtain a `neuron'.
     \item Slide across the image, one pixel at a time horizontally and vertically, and repeat the previous operation (see Figure \ref{convolution}).
 \end{itemize}
 
-\begin{figure}
+\begin{figure}[H]
 \begin{subfigure}[t]{.5\textwidth}
   \vskip 0pt
   \centering
@@ -31,13 +31,14 @@ Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and 3 re
 \label{convolution}
 \end{figure}
 
-By sliding through the image, you will get a new matrix of dimension $(h_{new}, w_{new},1)$, with $h_{new}=h-f+1$ and $w_{new}=w-f+1$. However, we usually don't want to reduce the size of our input image that fast, as we want to stack several convolutions. To ensure that the image has the same size after each convolution, zero-padding is used: we add $p$ zeros to the borders of the input image to preserve the spatial size of the input. (illustration needed, before and after zero-padding)With zero-padding, $h_{new}$ becomes: $h_{new} =  h + 2p - f + 1$, and we want that $h_{new}$ to be equal to $h$:
+By sliding through the image, you will get a new matrix of dimension $(h_{new}, w_{new},1)$, with $h_{new}=h-f+1$ and $w_{new}=w-f+1$. However, we usually don't want to reduce the size of our input image that fast, as we want to stack several convolutions. To ensure that the image has the same size after each convolution, zero-padding is used: we add $p$ zeros to the borders of the input image to preserve the spatial size of the input. (illustration needed, before and after zero-padding) With zero-padding, $h_{new}$ becomes: $h_{new} =  h + 2p - f + 1$, and we want $h_{new}$ to be equal to $h$:
 \begin{equation}
-h + 2p - f + 1 = h
+    h + 2p - f + 1 = h
+    \label{zeropadding}
 \end{equation}
-Therefore, $p=\frac{f-1}{2}$. Besides, zeros are used instead of any other number because you want the filter to activate on the pixels of the image only, therefore, setting the added border to zeros ensure that the resulting neuron will not be influenced by the border.
+Solving (\ref{zeropadding}) gives $p=\frac{f-1}{2}$. Besides, zeros are used instead of any other number because you want the filter to activate on the pixels of the image only, therefore, setting the added border to zeros ensure that the resulting neuron will not be influenced by the border.
 
-A convolution extracts information about the image such as edges or blotches of some color (Figure \ref{conv-ex}). The grayscale and edges filters were hardcoded but in a ConvNet setting, the weights of the filter F are learned through optimising a loss function -- in our case, a metric measuring how accurate our predictions of the emotions are. The network will learn weights that will detect features that will be most relevant to our specific task. A convolution also has a depth parameter $d$: simply repeat the operation described above $d$ times with $d$ independent filters of the same size $(f, f, 3)$, to create a new tensor of dimension $(h,w,d)$.
+A convolution extracts information about the image such as edges or blotches of some color (Figure \ref{conv-ex}). The grayscale and edges filters were hardcoded but in a ConvNet setting, the weights of the filter F are learned through optimising a loss function -- in our case, a metric measuring how accurate the predictions of the emotions are. The network will learn weights that will detect features that will be most relevant to our specific task. A convolution also has a depth parameter $d$: simply repeat the operation described above $d$ times with $d$ independent filters of the same size $(f, f, 3)$, to create a new tensor of dimension $(h,w,d)$.
 
 We can then apply convolutions on that new tensor. First layers will detect simple features such as edges or aggregation of colors, and deeper layers might recognise more complex features such as faces or wheels.
 
@@ -225,16 +226,16 @@ Are the images enough to accurately determine the emotion conveyed by the user? 
     \end{itemize}
 \end{itemize}
 
-Here are the results, the measured accuracy being the fraction of correctly classified images on the test set:
+Here are the results, the measured accuracy being the fraction of correctly classified images on the test set (20\% of the total dataset):
 \begin{table}[H]
 \begin{center}
     \begin{tabular}{| l | l | p{5cm} |}
     \hline
     Model & Parameters & Test accuracy \\ \hline
-    \textbf{Softmax regression} & $\text{L}_2$ reg: 0.01 & 0.40  \\ \hline
-    \textbf{Random Forest} & 1000 trees & 0.50 \\ \hline
-    \textbf{5-layer ConvNet} & architecture & 0.60 \\ \hline
-    \textbf{Inception fine-tuned} & architecture & 0.65 \\
+    \textbf{Softmax regression} & $\text{L}_2$ reg: 0.01 & 0.18  \\ \hline
+    \textbf{Random Forest} & 1000 trees & 0.20 \\ \hline
+    \textbf{5-layer ConvNet} & architecture & ?? \\ \hline
+    \textbf{Inception fine-tuned} & architecture & ?? \\
     \hline
     \end{tabular}
 \end{center} 

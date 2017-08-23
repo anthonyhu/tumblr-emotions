@@ -4,14 +4,14 @@
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Overview of the Data}
-Tumblr posts were retrieved using the official API, here is an example of a post:
+Tumblr posts were retrieved using the Python API, here is an example of a post:
 \begin{figure}[H]
 \centering
 \includegraphics[width=.58\textwidth]{Images/chowchow.png}
 \caption{An example of a Tumblr post}
 \end{figure}
 
-The tags are valuable as they indicate the user state of mind when writing that post. Queries were made searching for six different emotions appearing in the tags: happy, sad, angry, surprised, scared and disgusted. Each post contains the following information:
+The tags `\#chowchow \# home \#happy \#bluetongue' are really valuable as they indicate the user's state of mind when writing that post. Queries were made searching for six different emotions appearing in the tags: happy, sad, angry, surprised, scared and disgusted. Each post would then contain the following information:
 \begin{enumerate}
 \item The text, in the example above: \textit{When dogs are back home!}
 \item The picture.
@@ -23,13 +23,11 @@ The data extraction took several weeks due to the API's limitations: 1,000 reque
 \section{Data Preprocessing}
 In some posts, the tag was also appearing in the text itself, for instance:
 \begin{quote}
-\textit{``When you're on vacations and there is a rainstorm. \#fail \#sad"}.
+\textit{`When you're on vacations and there is a rainstorm. \#fail \#sad'}.
 \end{quote}
 Keeping the \textit{\#sad} would bias the learning process and the neural network would simply learn to detect the presence or absence of that tag. To ensure that the network is actually learning something, we removed the hashtags containing the emotion to be predicted.
 
-Also, Tumblr is used worldwide, therefore posts not written in english had to removed from the training data.
-
-Need to talk about preprocessing non-english posts/longest post, smallest post/ + final dataset size?
+Also, Tumblr is used worldwide, therefore posts not written in english had to removed from the training data. Basically, if a post does not contain a single english word in it, it is deemed as non-english and removed from the dataset. The vocabulary of english words was obtained from Word2Vec and will be detailed further in Section 4.
 
 Here are examples of posts with their associated emotions:
 
@@ -38,38 +36,38 @@ Here are examples of posts with their associated emotions:
   \vskip 0pt %Necessary to align on image and not caption
   \centering
   \includegraphics[width=.8\linewidth]{Images/happy.jpg}
-  \caption{\textbf{Happy}: ``Just relax with this amazing view \#bigsur \#california \#roadtrip \#usa \#life \#fitness (at McWay Falls)"}
+  \caption{\textbf{Happy}: `Just relax with this amazing view \#bigsur \#california \#roadtrip \#usa \#life \#fitness (at McWay Falls)'}
 \end{subfigure}
 \begin{subfigure}[t]{.5\textwidth}
   \vskip 0pt 
   \centering
   \includegraphics[width=.7\linewidth]{Images/scared.jpg}
-  \caption{\textbf{Scared}: ``On a plane guys! We're about to head out into the sky to Paris, France \#Paris \#trip \#kinda \#nervous \#fun \#vacations"}
+  \caption{\textbf{Scared}: `On a plane guys! We're about to head out into the sky to Paris, France \#Paris \#trip \#kinda \#nervous \#fun \#vacations'}
 \end{subfigure}
 \begin{subfigure}[t]{.5\textwidth}
   \vskip 0pt
   \centering
   \includegraphics[width=.6\linewidth]{Images/sad.jpg}
-  \caption{\textbf{Sad}: ``It's okay to be upset. It's okay to not always be happy. It's okay to cry. Never hide your emotions in fear of upsetting others or of being a bother   If you think no one will listen. Then I will."}
+  \caption{\textbf{Sad}: `It's okay to be upset. It's okay to not always be happy. It's okay to cry. Never hide your emotions in fear of upsetting others or of being a bother   If you think no one will listen. Then I will.'}
 \end{subfigure}
 \begin{subfigure}[t]{.5\textwidth}
   \vskip 0pt 
   \centering
   \includegraphics[width=.5\linewidth]{Images/angry.jpg}
-  \caption{\textbf{Angry}: ``Tensions were high this Caturday..."}
+  \caption{\textbf{Angry}: `Tensions were high this Caturday...'}
 \end{subfigure}
 \begin{subfigure}[t]{.5\textwidth}
   \vskip 0pt 
   \centering
   \includegraphics[width=.8\linewidth]{Images/surprised.jpg}
-  \caption{\textbf{Surprised}: ``Which Tea? Peppermint tea: What is your favorite gif right now?"}
+  \caption{\textbf{Surprised}: `Which Tea? Peppermint tea: What is your favorite gif right now?'}
 \end{subfigure}
 \begin{subfigure}[t]{.5\textwidth}
   \vskip 0pt 
   \centering
   \includegraphics[width=.8\linewidth]{Images/disgusted.jpg}
-  \caption{\textbf{Disgusted}: ``Me when I see a couple expressing their affection in physical ways in public"}
+  \caption{\textbf{Disgusted}: `Me when I see a couple expressing their affection in physical ways in public'}
 \end{subfigure}
-\caption{The 6 emotions in Tumblr posts \cite{tumblr-photos}}
+\caption{The 6 emotions illustrated by Tumblr posts \cite{tumblr-photos}}
 %\label{fig:fig}
 \end{figure}
