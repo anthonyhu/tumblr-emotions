@@ -7,10 +7,11 @@ The pictures are valuable to accurately determine the emotion of the user. For i
 A convolutional neural network, often called ConvNet, can be seen as a computer simulating the human visual cortex, that is to say an aggregation of plenty of receptive fields. (some illustration might be helpful here)
 
 \subsection{Convolutional Layer}
-Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and {\em3} representing the number of channels -- red, blue and green. If you simply flatten that image and transform it into a vector of size $h\times w \times 3$ and feed that vector to a neural network, you'll get not-so-good results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
+Take an image of dimension $(h,w,3)$ with $h$ the height, $w$ the width and {\em3} representing the number of channels -- red, blue and green. If you simply flatten that image and transform it into a vector of size $h\times w \times 3$ and feed it to a neural network, you'll get poor results as you've thrown away all the spatial information. Convolutions extract that spatial information and work the following way:
 \begin{itemize}
     \item Each convolution is described by a filter F of size $(f, f, 3)$, $f$ usually being equal to 3, 5, or 7.
-    \item Position the filter on the upper left of the image and element-wise multiply with the filter, then sum those numbers to obtain a `neuron'.
+    \item Position the filter on the upper left of the image and element-wise multiply the $f\times f \times 3$ chunk of image with the filter, then sum those numbers to 
+    obtain a `neuron'.
     \item Slide across the image, one pixel at a time horizontally and vertically, and repeat the previous operation (see Figure \ref{convolution}).
 \end{itemize}
 
@@ -38,9 +39,11 @@ By sliding through the image, you will get a new matrix of dimension $(h_{new}, 
 \end{equation}
 Solving (\ref{zeropadding}) gives $p=\frac{f-1}{2}$. Besides, zeros are used instead of any other number because you want the filter to activate on the pixels of the image only, therefore, setting the added border to zeros ensure that the resulting neuron will not be influenced by the border.
 
-A convolution extracts information about the image such as edges or blotches of some color (Figure \ref{conv-ex}). The grayscale and edges filters were hardcoded but in a ConvNet setting, the weights of the filter F are learned through optimising a loss function -- in our case, a metric measuring how accurate the predictions of the emotions are. The network will learn weights that will detect features that will be most relevant to our specific task. A convolution also has a depth parameter $d$: simply repeat the operation described above $d$ times with $d$ independent filters of the same size $(f, f, 3)$, to create a new tensor of dimension $(h,w,d)$.
+A convolution extracts information about the image such as edges or blotches of some color (Figure \ref{conv-ex}). The grayscale and edges filters were hardcoded but in a ConvNet setting, the weights of the filter F are learned through optimising a loss function -- in our case, a metric measuring how accurate the predictions of the emotions are. The network will learn weights that will detect features that will be most relevant to our specific task.
 
-We can then apply convolutions on that new tensor. First layers will detect simple features such as edges or aggregation of colors, and deeper layers might recognise more complex features such as faces or wheels.
+A convolution also has a \textbf{depth} parameter $d$: simply repeat the operation described above $d$ times with $d$ independent filters of the same size $(f, f, 3)$, to create a new tensor of dimension $(h,w,d)$.
+
+We can then apply convolutions on that new tensor. First layers will detect simple features such as edges or aggregation of colors, and deeper layers might recognise more complex features such as faces.
 
 \begin{figure}
 \centering
@@ -50,7 +53,7 @@ We can then apply convolutions on that new tensor. First layers will detect simp
 \end{figure}
 
 \subsection{ReLU Layer}
-Stacking convolutions is nice, but as it is, we are only creature features that are linearly dependent of the input pixels: we could in fact replace all the convolutions with a single matrix multiplication. In order to learn more interesting functions, we have to add non-linearities. Historically, the popular choice was the sigmoid function defined as:
+Stacking convolutions is nice, but as it is, we are only creating features that are linearly dependent of the input pixels: we could in fact replace all the convolutions with a single matrix multiplication. In order to learn more interesting functions, we have to add non-linearities -- that is to say transforming the tensor $(h,w,d)$ with a non-linear function. Historically, the popular choice was the sigmoid function defined as:
 \begin{equation}
 \text{sigmoid}(x) = \frac{1}{1+e^{-x}}
 \end{equation}
@@ -61,7 +64,7 @@ Stacking convolutions is nice, but as it is, we are only creature features that 
 \caption{Sigmoid function}
 \end{figure}
 
-The sigmoid function is the simplest function having values between 0 and 1 mimicking the biological neurons `firing' in reaction to their inputs. However, when the network is learning to minimise a loss function through backpropagation, the gradients tend to vanish to zero as the sigmoid's derivative goes to zero for high negative and positive values. The most popular choice of non-linearity is now the Rectified Linear Unit (ReLU) defined as:
+The sigmoid function is the simplest function to have values between 0 and 1, mimicking the biological neurons `firing' in reaction to their inputs. However, when the network is learning to minimise a loss function through backpropagation, the gradients tend to vanish to zero as the sigmoid's derivative goes to zero for values that are highly negative or positive. The most popular choice of non-linearity is now the Rectified Linear Unit (ReLU) defined as:
 \begin{equation}
 \text{ReLU}(x) = \text{max}(0,x)
 \end{equation}
@@ -101,7 +104,7 @@ The same idea applies to convolved images, we might not need all the neurons tha
 
 After applying max pooling to each channel, the resulting image dimension is $(\frac{h}{2}, \frac{w}{2}, d)$ and we have discarded 75\% of the neurons (as in each max-pool operation, we only keep the maximum neuron among the fours), effectively reducing the number of parameters and controlling overfitting.
 
-You could wonder why max-pooling and not average pooling (taking the mean value of the four neurons)? The convolutions allow us to see if a certain feature is in the image when a neuron fires, and we only want to know if that feature is there in a certain region. Therefore taking the max of the four neurons is sufficient to know whether that feature is there or not in that particular region.
+You could wonder why max-pooling and not average pooling (taking the mean value of the four neurons). The convolutions allow us to see if a certain feature is in the image when a neuron fires, and we only want to know if that feature is there in a certain region. Therefore taking the max of the four neurons is sufficient to know whether that feature is there or not in that particular region.
 
 In practice, after a few iterations of convolutions, inserting pooling layers in-between convolutional layers might be a good idea to control the spatial complexity of the network.
 
@@ -111,7 +114,7 @@ Here is an example of a convolutional neural network with an input image of size
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{Images/conv_archi.png}
-\caption{An architecture of a neural network \cite{gorner}}
+\caption{The architecture of a convolutional neural network \cite{gorner}}
 \end{figure}
 
 \begin{itemize}
@@ -130,34 +133,32 @@ Best results are achieved using deep convolutional networks, that is to say by s
     \item \textbf{AlexNet} \cite{alexnet}: The first popular convolutional network, developed by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, that outperformed 
     the other competitors at ILSVR 2012 by a large margin: top-5 error of 16\% compared to the runner-up with 26\%. AlexNet has 5 convolutional layers (followed by 
     ReLU), 3 max-pool layers and 3 fully-connected layers, producing a 8-layer deep network (not counting the max-pooling as it doesn't have any parameters).
-    \item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: This is the winner of ILSVR 2014 with a top-5 error of 6.7\% . This 22-layer architecture used 
-    the `Inception Module' which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet.
+    \item \textbf{GoogLeNet} (also known as Inception)\cite{googlenet}: The the winner of ILSVR 2014 with a top-5 error of 6.7\% . This 22-layer architecture used 
+    the `Inception Module' (that will be described shortly) which allowed to drastically reduce the number of parameters: from 60M for AlexNet to 4M for GoogLeNet.
     \item \textbf{ResNet} \cite{resnet}: The winner of ILSVR 2015 with a top-5 error of 3.6\% thanks to an astonishing 152 layers convolutional network. This 
     architecture features `skip connections' allowing this ultra-deep network achieve such results.
-
-(explain Inception module, talk about computational considerations (Stanford CS231n))
 \end{enumerate}
 
 \section{Transfer Learning}
-Training a convolutional network from scratch can be difficult as a large amount of data is needed and plenty of different architectures and hyperparameters need to be tried before finding a decent model. To circumvent that issue, you can take advantage of the pre-trained models available that learned to recognize images through near 1.2M training examples and a deep architecture that took weeks to train on multiple GPUs.
+Training a convolutional network from scratch can be difficult as a large amount of data is needed and plenty of different architectures and hyperparameters need to be tried before finding a decent model. To circumvent that issue, you can take advantage of the pre-trained models available that learned to recognize images through near 1.2M training examples from the ImageNet dataset, and a deep architecture that took weeks to train on multiple GPUs.
 
-More specifically, the pre-trained networks learned to recognise features on a picture that allow it to classify the latter among the 1000 classes there are on the ImageNet dataset. Those features are combined in the final fully connected layer to make a decision. Suppose that instead of classifying an image into 1000 classes we want to label it according to 6 different emotions (happy, sad, angry, scared, surprised, disgusted). The same features can be combined in a different way to let the network take a decision on the emotion label of the image.
+More specifically, the pre-trained networks learned to recognise features on a picture in order to classify the latter among the 1000 classes on the ImageNet dataset. Those features are combined in the final output layer (of size 1000, each neuron being a class probability). Suppose that instead of classifying an image into 1000 classes we want to label it according to 6 different emotions (happy, sad, angry, scared, surprised, disgusted). The same features can be combined in a different way to let the network take a decision about what is the emotion of the image.
 
-The process described above is called {\em Transfer Learning}: you chop off the last layer of the network and add your own layer given how many classes you have. You then freeze the weights of the other layers and only backpropagate through the newly created layer when training the network on your examples. If you have enough data, you can unfreeze more higher-level layers and backpropagate through them. One way to see why this works is that earlier features of ConvNets contain more generic features (such as edges or color blobs), while later features become more specific to the details of the classes present in the dataset. For example in ImageNet, there are many dog breeds and the later representational power might be used to distinguish those \cite{transfer}.
+The process described above is called {\em Transfer Learning}: we chop off the last layer of the network and add our own layer given how many classes we have. We then freeze the weights of the other layers and only backpropagate through the newly created layer when training the network on our examples. If we have enough data, we can unfreeze more higher-level layers and backpropagate through them.
 
-We will be using Google's Inception network and fine-tune the last fully-connected layer.
+Earlier features of ConvNets contain more generic features (such as edges or color blobs) that can be used for any task, while later features become more specific to the details of the classes present in the dataset. For example in ImageNet, there are many dog breeds and the later representational power might be used to distinguish those \cite{transfer}. We will be using Google's Inception network and fine-tune through the last 3 layers. (that number is subject to change)
 
 \section{Google Inception Network}
 
 \subsection{Motivation}
-After AlexNet proved that convolutional networks outperformed traditional machine learning models, the trend to achieve even better results was to build wider (more units per layer) and deeper (more layers) networks and to add dropout to address overfitting. However, bigger networks are more expensive to train (more parameters) and could not be usable for real-time prediction if a forward-pass takes more than a second for instance. Moreover, if the increased capacity is not used efficiently, for example if most added weights are close to zero, then the network added depth will be completely wasted.
+After AlexNet proved that convolutional networks outperformed traditional machine learning models, the trend to achieve even better results was to build wider (more units per layer) and deeper (more layers) networks and to add dropout to address overfitting. However, bigger networks are more expensive to train (more parameters) and could not be usable for real-time prediction if a forward-pass takes more than a second for instance. Moreover, if the increased capacity is not used efficiently, for example if most added weights are close to zero, then the extra depth and width will be completely wasted.
 
 To address this problem, we could replace the fully connected layers by sparse ones, even inside convolutions \cite{googlenet}. Not only would it mimic more closely biological systems, but it would also have more theoretical ground thanks to the work of Arora et al. \cite{arora}. They proved that if the probability distribution of a dataset can be represented by a large, very sparse neural network, then it's possible to build the optimal network layer after layer by clustering highly correlated neurons of the preceding layer.
 
-Current networks architectures are not using sparse layers as the libraries are heavily optimised for dense matrix multiplication. Training sparse layers would incur considerable overhead that are not handled by today's computing infrastructures. However, the Inception module is an elegant solution to add more expressiveness to your network while keeping the number of parameters low. 
+Current networks architectures are not using sparse layers as the libraries are heavily optimised for dense matrix multiplication. Training sparse layers would incur considerable overhead that are not handled by today's computing infrastructures. However, the Inception module is an elegant solution to add more expressiveness to a network while keeping the number of parameters low. 
 
 \subsection{Inception Module}
-At each layer, you'd normally be facing the dilemma of choosing between $1\times 1$, $3\times 3$, $5\times5$ convolution or max-pooling:
+At each layer, we would normally be facing the dilemma of choosing between $1\times 1$, $3\times 3$, $5\times5$ convolution or max-pooling:
 
 \begin{figure}[H]
     \centering
@@ -165,7 +166,7 @@ At each layer, you'd normally be facing the dilemma of choosing between $1\times
     \caption{Which layer to choose? \cite{inceptionmodule}}
 \end{figure}
 
-In the Inception module, you perform all of the above operations and let the network decide for you. Each operation is done in parallel before being concatenated and fed to the next layer. This allows to capture both local features via small convolutions and more high-level features via large convolutions. 
+In the Inception module, we perform all of the above operations and let the network decide for us. Each operation is done in parallel before being concatenated and fed to the next layer. This allows to capture both local features via small convolutions and more high-level features via large convolutions. 
 
 \begin{figure}[H]
     \centering
@@ -173,13 +174,13 @@ In the Inception module, you perform all of the above operations and let the net
     \caption{Naive Inception module \cite{googlenet}}
 \end{figure}
 
-But wait.. How is this supposed to keep the number of parameters low? This is actually the naive implementation of the Inception module. One key component are the $1\times 1$ convolution for dimensionality reduction before the large convolutions, that behave like clustering the highly correlated neurons. Let's take an example to understand: suppose at an arbitrary layer, your input is size $(14, 14, 480)$.
+But wait.. How is this supposed to keep the number of parameters low? This is actually the naive implementation of the Inception module. One key component are the $1\times 1$ convolutions, which behave like clustering the highly correlated neurons, before the large convolutions. Let's take an example to understand: suppose at an arbitrary layer, your input is size $(14, 14, 480)$.
 \begin{itemize}
-\item \textbf{$\mathbf{5\times 5}$ convolution, depth 48}: requires $(14^2)(480)(5^2)(48) = 112,896,000$ operations (supposing stride 1 and zero-padding).
-\item \textbf{$\mathbf{1\times 1}$ convolution, depth 16 followed by $\mathbf{5\times 5}$ convolution, depth 48:} requires $[(14^2)(480)(1^2)(16)] + [(14^2)(16)(5^2)(48)] = 5,268,480$ operations.
+\item A \textbf{$\mathbf{5\times 5}$ convolution, depth 48}: requires $(14^2)(480)(5^2)(48) = 112,896,000$ operations (supposing stride 1 and zero-padding).
+\item An \textbf{$\mathbf{1\times 1}$ convolution, depth 16, followed by a $\mathbf{5\times 5}$ convolution, depth 48:} requires $[(14^2)(480)(1^2)(16)] + [(14^2)(16)(5^2)(48)] = 5,268,480$ operations.
 \end{itemize}
 
-That's more than twenty times faster! The number of parameters is also reduced by twenty as the reduction is the same (to get the actual number of parameters, you only need to divide the above by $14^2)$. The final Inception module is the following:
+That's more than twenty times faster! The number of parameters is also reduced by twenty as the reduction factor is the same (to get the actual number of parameters, you only need to divide the above by $14^2)$. The final Inception module is the following:
 
 \begin{figure}[H]
     \centering
@@ -226,7 +227,7 @@ Are the images enough to accurately determine the emotion conveyed by the user? 
     \end{itemize}
 \end{itemize}
 
-Here are the results, the measured accuracy being the fraction of correctly classified images on the test set (20\% of the total dataset):
+Here are the results, the measured accuracy being the fraction of correctly classified images on the test set:
 \begin{table}[H]
 \begin{center}
     \begin{tabular}{| l | l | p{5cm} |}
@@ -234,8 +235,8 @@ Here are the results, the measured accuracy being the fraction of correctly clas
     Model & Parameters & Test accuracy \\ \hline
     \textbf{Softmax regression} & $\text{L}_2$ reg: 0.01 & 0.18  \\ \hline
     \textbf{Random Forest} & 1000 trees & 0.20 \\ \hline
-    \textbf{5-layer ConvNet} & architecture & ?? \\ \hline
-    \textbf{Inception fine-tuned} & architecture & ?? \\
+    \textbf{5-layer ConvNet} & see above & ?? \\ \hline
+    \textbf{Inception fine-tuned} & see above & ?? \\
     \hline
     \end{tabular}
 \end{center} 

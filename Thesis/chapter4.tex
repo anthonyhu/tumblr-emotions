@@ -1,5 +1,5 @@
 \chapter{Natural Language Processing}
-Even as a human being, it can be difficult to guess the expressed emotion by looking only at the Tumblr Image without reading the text as shown by Figure \ref{disgusted-unclear}
+Even as a human being, it can be difficult to guess the expressed emotion by only looking at the Tumblr Image without reading the text as shown by Figure \ref{disgusted-unclear}
 
 \begin{figure}[H]
     \centering
@@ -8,13 +8,13 @@ Even as a human being, it can be difficult to guess the expressed emotion by loo
     \label{disgusted-unclear}
 \end{figure}
 
-With only the image, it's unclear whether the user is sad or disgusted. Only be reading the text ``Me when I see a couple expressing their affection in physical ways in public?, you can finally conclude that the emotion conveyed was: {\em disgusted}. The text is extremely informative and is usually crucial to accurately infer the emotion. Neural networks only work with numbers, therefore the text has to be converted into raw numbers. A very successful way to capture the meaning of a sentence is by using word embedding.
+It's unclear whether the user is sad or disgusted. Only by reading the text ``Me when I see a couple expressing their affection in physical ways in public", you can finally conclude that the emotion conveyed is: {\em disgusted}. The text is extremely informative and is usually crucial to accurately infer the emotion. Neural networks only work with numbers, therefore the text has to be converted into raw numbers. A very successful way to capture the meaning of a sentence is by using word embedding.
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Word Embedding}
-One way to map the text into numbers would be to use a dictionary that maps each word in the vocabulary (containing all the words of every Tumblr posts) to an integer. Then, you could transform any word into an one-hot vector, a vector of size the number of words in the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance). A major drawback is that this will cause data sparsity as the vocabulary size can be huge. For example, the number of 5-word sentences with a vocabulary size of 1000, is $1000^5=10^{15}$. This problem is specific to text as image and audio processing systems train on rich high-dimensional data (pixel intensities for images and spectral densities for audio), as shown by Figure \ref{comparison-text}.
+One way to map text into numbers would be to use a dictionary that maps each word in the vocabulary (containing all the words of every Tumblr posts) to an integer. Then, you could transform any word into an one-hot vector, a vector of size the number of words in the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance). A major drawback is that this will cause data sparsity as the vocabulary size can be huge. For example, the number of 5-word sentences with a vocabulary size of 1000, is $1000^5=10^{15}$. This problem is specific to text as image and audio processing systems train on rich high-dimensional data (pixel intensities for images and spectral densities for audio), as shown by Figure \ref{comparison-text}.
 
 \begin{figure}[H]
     \centering
@@ -23,13 +23,13 @@ One way to map the text into numbers would be to use a dictionary that maps each
     \label{comparison-text}
 \end{figure}
 
-Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close as `tree' as it is with `cat'. Ideally, you would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how word embedding works: every word is projected into a highly dimensional space that keep semantic relationships. Therefore, what the model has learned about dogs can be used when a cat is encountered. 
+Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close to `tree' as it is to `cat'. Ideally, you would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how word embedding works: every word is projected into a highly dimensional space that keep semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
 
 \subsection{Word2Vec Overview}
 The Word2Vec model by Mikolov et al. \cite{word2vec} is an efficient implementation of word embedding and works as follow:
-Suppose you have a sentence: `the ants in the garden'. You can break that sentence in (context, target) pairs where the context are the words surrounding the target word. For example, if you take a context with a window of 1, you get the follow pairs: ([the, in], ants), ([ants, the], in), ([in, garden], the) [we omitted the pairs where the context wasn't of size 2]. You will then train a model to predict the target word given the context, and the weights of the model will give the word embedding (this will become clearer shortly). This model is called the Continuous Bag-of-Words model, and Word2Vec also comes in another flavor called the Skip-Gram model.
+Suppose you have a sentence: ``the ants in the garden". We can break that sentence in (context, target) pairs where the context are the words surrounding the target word. For example, if we take a context with a window of 1, we get the following pairs: ([the, in], ants), ([ants, the], in), ([in, garden], the) [we omitted the pairs where the context wasn't of size 2]. We will then train a model to predict the target word given the context, and the weights of the model will give the word embedding (this will become clearer shortly). This model is called the Continuous Bag-of-Words model, and Word2Vec also comes in another flavor called the Skip-Gram model.
 
-In the Skip-Gram model, you will predict the context given the target word, creating more pairs as for instance ([the, in], ants) are split into two training instances: (ants, the), (ants, in). The Continuous Bag-of-Words model smooth over the the distributional information by using the whole context, and works well on smaller datasets, but by breaking the (context, target) pair into more observations, the Skip-Gram model tends to perform better on larger datasets, and that's the model we will stick on from now on.
+In the Skip-Gram model, we will predict the context given the target word, creating more pairs as for instance ([the, in], ants) are split into two training instances: (ants, the), (ants, in). The Continuous Bag-of-Words model smooth over the distributional information by using the whole context, and works well on smaller datasets, but by breaking the (context, target) pair into more observations, the Skip-Gram model tends to perform better on larger datasets, and that's the model we will stick on from now on.
 
 \subsection{Skip-Gram Model}
 The model is a neural network with one hidden layer and its objective is to predict the context word given the target. The input of the network will be a target word represented as a one-hot vector, of size say 10,000 (that's the vocabulary size) and the output will also be a vector of size 10,000 giving the probability distribution of the context word. Here is the architecture of the model:
@@ -50,7 +50,7 @@ There is no activation function in the hidden layer, but output neurons use soft
 
 To learn those weights, the network is minimising the cross-entropy loss given a (target word, context word) = $(w_t, w_c)$:
 \begin{align}
-    \text{J}_{\text{CE}}(w_t, w_c)   &=  -\text{log}~P(w_c | w_t) \nonumber\\
+    \text{J}_{\text{CE}}   &=  -\text{log}~P(w_c | w_t) \nonumber\\
     &= -\text{log}~\{\text{softmax}(w_c, w_t)\}\nonumber\\
     &= -\text{log}\left(\frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\sum_{\text{Word w' in Vocab}}\text{exp}\{\text{score}(w_c, w')\}} \right)
     \label{cross-entropy}
@@ -61,27 +61,34 @@ With $\text{score}(w_c, w_t)$ being the element in position $w_c$ in the output 
 \subsection{Intuition}
 In this model, two words that have similar contexts should output similar probability distribution. One way to produce that is to simply learn a similar word embedding for these two words. Therefore, words with similar context will have a similar vector representation which is exactly what we wanted.
 
-Which words have similar contexts? Synonyms are a good example: `brave' and `fearless' are two words that must appear in similar contexts. The same applies for words that are related such as `physics' and `thermodynamics' or words with the same stem `apples' and 'apple'. 
+Which words have similar contexts? Synonyms are a good example: `brave' and `fearless' are two words that must appear in similar contexts. The same applies for words that are related such as `physics' and `thermodynamics' or words with the same stem, e.g. `apples' and 'apple'. 
 
+\newpage
 \section{Training the Model}
-Training the network described above involves, with a vocabulary size of 10 000: 10 000$\times300$=3M parameters for the hidden layer and $300\times$10 000=3M for the output layer. In fact, the actual Word2Vec model contain 3M words, the number of parameters is thus 2$\times$3M$\times$300=1.8B. That's a huge neural network that will need a really large training set to train those parameters, which is not feasible without a few tweaks.
+Training the network described above involves, with a vocabulary size of 10 000: 10 000$\times300$=3M parameters for the hidden layer and $300\times$10 000=3M for the output layer. In fact, the actual Word2Vec model contain 3M words, the number of parameters is thus 2$\times$3M$\times$300=1.8B. That's a huge neural network that will need a really large training set to train those parameters, which is not feasible without a few tweaks:
+
+\begin{enumerate}
+    \item Negative sampling
+    \item Word pairs and phrases
+    \item Subsampling of frequent words
+\end{enumerate}
 
 \subsection{Negative Sampling}
 When training the model with gradient descent, each backward pass will update all the parameters of the model. Negative sampling addresses this problem by only updating a fraction of the parameters.
 
 For a given (target, context word) pair, we want the output of the model to be 1 on the context word and 0s for all the other words. With negative sampling, we'll instead randomly select a small subset of `negative samples' (a word we want the network to output a 0 for) to update the weights for. The paper by T. Mikolov et al. \cite{word2vec2} states that 5-20 negative samples for small datasets and 2-5 for large datasets achieve good results.
 
-More specifically, the negative samples are selected using a `unigram distribution' with more frequent words more likely to be selected. The probability to select a word $w_i$ is simply its frequency $f_i$ to the power 3/4 (chosen empirically) divided by the sum of weights of all the other words:
+More specifically, the negative examples are sampled using a `unigram distribution' with more frequent words more likely to be selected. The probability to select a word $w_i$ is simply its frequency $f_i$ to the power 3/4 (chosen empirically) divided by the sum of weights of all the other words:
 \begin{equation}
     P(w_i) = \frac{f_i^{3/4}}{\sum_{j=1}^V f_j^{3/4}}
 \end{equation}
 
 If we select 5 negative samples, then in the output layer those 5 words and the context word will be updated, and they each have 300 parameters (the embedding size) meaning that only 1800 parameters will be updated among the 0.9B parameters in the output layer, that's only 0.0002\% of the parameters.
 
-In the hidden layer, only the weights of the input word (300 parameters) will be updated, but that's always the case regardless of negative sampling as the one-hot vector zero-out every weight in the hidden layer that does not belong to the input word.
+In the hidden layer, only the weights of the input word (300 parameters) will be updated, but that's always the case regardless of negative sampling as the one-hot vector of the input word zero-out every weight in the hidden layer that does not belong to the input word.
 
 \subsection{Negative Sampling, with Maths}
-The loss function (\ref{cross-entropy}) has a normalising denominator that is expensive to compute, and is the direct cause of why all the parameters would be updated. We'd like to instead use an approximation with a loss cheaper to compute. This approximation is only used when training as during inference, the softmax function has to be computed to obtain a proper probability distribution.
+The loss function (\ref{cross-entropy}) has a normalising denominator that is expensive to compute, and is the direct cause of why all the parameters in the output layer would be updated. We'd like to instead use an approximation with a loss cheaper to compute. This approximation is only used when training as during inference, the softmax function has to be computed to obtain a proper probability distribution.
 
 Instead of discriminating the context word $w_c$ from all the other words in the vocabulary, we'll sample $k$ words $\tilde{w}_1, \tilde{w}_2, ..., \tilde{w}_k$ from a noise distribution $Q$, the unigram distribution, that we'll discriminate from $w_c$, as shown in Figure \ref{discri}.
 
@@ -100,14 +107,14 @@ Instead of discriminating the context word $w_c$ from all the other words in the
     \label{discri}
 \end{figure}
 
-The new binary classification task has $w_c$ as positive examples $(y=1)$ and all the noise samples $\tilde{w}_1, \tilde{w}_2, ..., \tilde{w}_k$  as negative examples $y=0$. The loss function, with a pair $(w_t, w_c)$, is:
+The new binary classification task has $w_c$ as positive example $(y=1)$ and all the noise samples $\tilde{w}_1, \tilde{w}_2, ..., \tilde{w}_k$  as negative examples $y=0$. The loss function, with a pair $(w_t, w_c)$, is:
 \begin{equation}
-    \text{J}_{\text{NEG}}(w_t, w_c)  = -[\text{log}~P(y=1| w_c, w_t) + k\mathbb{E}_{\tilde{w}\sim Q}[\text{log}~P(y=0|\tilde{w}, w_t]]
+    \text{J}_{\text{NEG}}  = -[\text{log}~P(y=1| w_c, w_t) + k\mathbb{E}_{\tilde{w}\sim Q}[\text{log}~P(y=0|\tilde{w}, w_t]]
 \end{equation}
 
 Calculating the expectation $\mathbb{E}_{\tilde{w}\sim Q}$ would involve summing over all the vocabulary to compute the probability normalising constant, which is exactly what we wanted to avoid in the first place. That's why we will instead use a Monte Carlo approximation with our noise samples:
 \begin{align}
-    \text{J}_{\text{NEG}}(w_t, w_c)  &= -\left[\text{log}~P(y=1| w_c, w_t) + k\sum_{j=1}^{k}\frac{1}{k}\text{log}~P(y=0|\tilde{w}_j, w_t]\right]\nonumber \\
+    \text{J}_{\text{NEG}}  &= -\left[\text{log}~P(y=1| w_c, w_t) + k\sum_{j=1}^{k}\frac{1}{k}\text{log}~P(y=0|\tilde{w}_j, w_t]\right]\nonumber \\
      &= -\left[\text{log}~P(y=1| w_c, w_t) + \sum_{j=1}^k\text{log}~P(y=0|\tilde{w}_j, w_t)\right]
 \end{align}
 
@@ -117,7 +124,7 @@ We still haven't a proper derivation of the probability $P(y=1| w_c, w_t)$. Note
 \end{equation}
 And the unigram distribution $Q$ to sample the noise:
 \begin{equation}
-    Q(w) = \frac{f_i^{3/4}}{\sum_{j=1}^V f_j^{3/4}}
+    Q(w_i) = \frac{f_i^{3/4}}{\sum_{j=1}^V f_j^{3/4}}
 \end{equation}
 
 The probability to obtain a positive example is simply a weighted probability of seeing an example from $P_{\text{train}}$:
@@ -144,7 +151,7 @@ The trick to avoid computing $Z(w_c)$ is to simply consider it as another parame
 
 The loss function becomes:
 \begin{equation}
-    \text{J}_{\text{NEG}}(w_t, w_c)  = -\left[\text{log}~\frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\text{exp}\{\text{score}(w_c, w_t)\} + kQ(w_c)} + \sum_{j=1}^k\text{log}~\frac{kQ(w_c)}{\text{exp}\{\text{score}(w_c, w_t)\} + kQ(w_c)}\right]
+    \text{J}_{\text{NEG}}  = -\left[\text{log}~\frac{\text{exp}\{\text{score}(w_c, w_t)\}}{\text{exp}\{\text{score}(w_c, w_t)\} + kQ(w_c)} + \sum_{j=1}^k\text{log}~\frac{kQ(\tilde{w}_j)}{\text{exp}\{\text{score}(\tilde{w}_j, w_t)\} + kQ(\tilde{w}_j)}\right]
 \end{equation}
 
 Actually, this loss function is not quite Negative Sampling, but instead what we call Noise Contrastive Estimation (NCE), Negative Sampling has a further simplification we'll discuss shortly. Mnih and Teh \cite{nce} proved that as the number of noise samples $k$ increases, the gradient of the derivative of the NCE goes toward the softmax function. In their paper, they also state that 25 samples are enough to match the performance of the softmax, but with an increased speed of 45.
@@ -156,7 +163,7 @@ The remaining expensive term to compute in the loss function is $kQ(w_c)$, as it
 
 Giving the following final loss function:
 \begin{equation}
-    \text{J}_{\text{NEG}}(w_t, w_c)  = -\left[\text{log}~\frac{1}{1 + \text{exp}\{-\text{score}(w_c, w_t)\}} + \sum_{j=1}^k\text{log}~\frac{1}{1 + \text{exp}\{\text{score}(w_c, w_t)\}}\right]
+    \text{J}_{\text{NEG}} = -\left[\text{log}~\frac{1}{1 + \text{exp}\{-\text{score}(w_c, w_t)\}} + \sum_{j=1}^k\text{log}~\frac{1}{1 + \text{exp}\{\text{score}(\tilde{w}_j, w_t)\}}\right]
 \end{equation}
 
 \subsection{Word Pairs and Phrases}
@@ -175,7 +182,7 @@ With:
 The pairs $(w_i, w_j)$ with a score above a threshold are then added to the vocabulary. Several passes on the training data are made to make longer phrases such as `Times Higher Education' (usually 2-4 passes with a decreasing threshold value after each pass).
 
 \subsection{Subsampling of Frequent Words}
-If we look again at the example `the ants in the garden', the training instances will contain (ants, the) and (garden, the). The word `the' doesn't help a lot at understanding the usual context of the words `ant' and `garden' as it appears in virtually every noun. Furthermore, `the' will have far too many training instances to get a decent vector representation of the word.
+If we look again at the example `the ants in the garden', the training instances will contain (ants, the) and (garden, the). The word `the' doesn't help a lot at understanding the usual context of the words `ant' and `garden' as it appears in virtually every noun. Furthermore, `the' will have far too many training instances to get a vector representation of that word.
 
 To address these problems, subsampling was used: each word in the corpus has a probability to be deleted relative to its frequency. Therefore, if we have a window size of 15 and the word `the' is deleted, then this word will not appear in the context of the remaining words. Also, we now have 15 times fewer training instances containing `the'.
 
@@ -210,10 +217,10 @@ The skip-gram model had the following parameters:
     \item Subsampling threshold of $1\mathrm{e}{-3}.$
 \end{itemize}
 
-\subsection{Results}
-Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space [Elaborate on mean embedding].
+\section{Results}
+Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space \cite{seth1} [Elaborate on mean embedding].
 
-The network architecture is straight-forward as a the output softmax layer directly follows the mean embedding [illustration required]. This model achieves \textbf{55\%} accuracy on the test set. This is not bad at all, but note that the word order is completely lost! The order can be preserved using Recurrent Neural Networks, which is our next section.
+The network architecture is straight-forward as the output softmax layer directly follows the mean embedding [illustration required]. This model achieves \textbf{55\%} accuracy on the test set. This is not bad at all, but note that the word order is completely lost! The order can be preserved using Recurrent Neural Networks, which is our next section.
 
 
 
