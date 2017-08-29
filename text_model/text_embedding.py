@@ -37,12 +37,12 @@ class CharModel():
         nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed_dropout, 0.0), tf.float32), axis=1)
         # If a post has zero finite elements, replace nb_finite by 1
         nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), nb_finite)
-        h1 = tf.reduce_mean(input_embed_dropout, axis=1) * post_size / nb_finite
+        self.h1 = tf.reduce_mean(input_embed_dropout, axis=1) * post_size / nb_finite
 
         # Fully connected layer
         W_fc1 = tf.get_variable('W_fc1', [embedding_dim, fc1_size])
         b_fc1 = tf.get_variable('b_fc1', [fc1_size])
-        h2 = tf.matmul(h1, W_fc1) + b_fc1
+        h2 = tf.matmul(self.h1, W_fc1) + b_fc1
         h2 = tf.nn.relu(h2)
 
         W_softmax = tf.get_variable('W_softmax', [fc1_size, nb_emotions])
@@ -151,13 +151,82 @@ def generate_chars(sess, model, first_char, max_iteration):
         current_char = sample
     return samples
 
+def compute_sklearn_features():
+    """Compute mean word embedding features for sklearn models.
+    """
+    text_dir = 'text_model'
+    emb_dir = 'embedding_weights'
+    filename = 'glove.6B.50d.txt'
+    emb_name = 'glove'
+    emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
+    post_size = 200
+    df_all, word_to_id, embedding = preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size)
+
+    X = np.stack(df_all['text_list'])
+    y = df_all['search_query'].values
+
+    id_to_word = {i: k for k, i in word_to_id.iteritems()}
+    config = {'word_to_id': word_to_id,
+              'id_to_word': id_to_word,
+              'batch_size': 128,
+              'vocab_size': len(word_to_id),
+              'embedding_dim': embedding.shape[1],
+              'post_size': post_size,
+              'fc1_size': 16,
+              'nb_emotions': len(emotions),
+              'dropout': 1.0, # Proba to keep neurons
+              'max_grad_norm': 5.0, # Maximum norm of gradient
+              'init_scale': 0.1, # Weights initialization scale
+              'initial_lr': 1e-3,
+              'lr_decay': 0.5,
+              'max_epoch_no_decay': 2, # Number of epochs without decaying learning rate
+              'nb_epochs': 10} # Maximum number of epochs
+    
+    tf.reset_default_graph()
+    with tf.Session() as sess:
+        print('Computing sklearn features:')
+        init_scale = config['init_scale']
+        initializer = tf.random_uniform_initializer(-init_scale, init_scale)    
+        with tf.variable_scope('Model', reuse=None, initializer=initializer):
+            config['nb_epochs'] = 1
+            m_train = CharModel(config)
+        sess.run(tf.global_variables_initializer())
+        sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: embedding})
+
+        batch_size = m_train.config['batch_size']
+        initial_lr = m_train.config['initial_lr']
+        
+        nb_batches = X.shape[0] / batch_size
+        dropout_param = 1.0
+        ops = m_train.h1
+        
+        sess.run(tf.assign(m_train.learning_rate, initial_lr))
+
+        X, y = _shuffling(X, y)
+        X_reshaped = X[: (nb_batches * batch_size), :].reshape((nb_batches, batch_size, -1))
+        y_reshaped = y[: (nb_batches * batch_size)].reshape((nb_batches, batch_size))
+        h1_list = []
+        for i in range(nb_batches):
+            curr_input = X_reshaped[i, :, :]
+            curr_target = y_reshaped[i, :]
+            h1_features = sess.run(ops, feed_dict={m_train.input_data: curr_input, 
+                                                   m_train.target: curr_target,
+                                                   m_train.keep_prob: dropout_param})
+            h1_list.append(h1_features)
+
+        X_sklearn = np.vstack(h1_list)
+        y_sklearn = y_reshaped.reshape((-1))
+        print('Finished')
+        return X_sklearn, y_sklearn
+
 def main_text():
     text_dir = 'text_model'
     emb_dir = 'embedding_weights'
     filename = 'GoogleNews-vectors-negative300.bin'
+    emb_name = 'word2vec'
     emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
     post_size = 200
-    df_all, word_to_id, embedding = preprocess_df(text_dir, emb_dir, filename, emotions, post_size)
+    df_all, word_to_id, embedding = preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size)
 
     X = np.stack(df_all['text_list'])
     y = df_all['search_query'].values

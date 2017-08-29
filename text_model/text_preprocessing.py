@@ -98,10 +98,13 @@ def _paragraph_to_ids(paragraph, word_to_id, post_size):
         words = words + [vocab_size] * (post_size - len(words))
     return words
 
-def preprocess_df(text_dir, emb_dir, filename, emotions, post_size):
+def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
     """Preprocess emotion dataframes.
     """
-    vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
+    if emb_name == 'word2vec':
+        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
+    else:
+        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
     vocab_size, embedding_dim = embedding.shape
     word_to_id = dict(zip(vocabulary, range(vocab_size)))
     # Unknown words = vector with zeros
