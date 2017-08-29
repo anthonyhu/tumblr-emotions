@@ -3,7 +3,7 @@ import numpy as np
 
 from time import time
 from sklearn.model_selection import train_test_split
-from text_model.preprocess_text import preprocess_df
+from text_model.text_preprocessing import preprocess_df
 
 _RANDOM_SEED = 0
 
@@ -151,10 +151,10 @@ def generate_chars(sess, model, first_char, max_iteration):
         current_char = sample
     return samples
 
-def main():
+def main_text():
     text_dir = 'text_model'
     emb_dir = 'embedding_weights'
-    filename = 'glove.6B.50d.txt'
+    filename = 'GoogleNews-vectors-negative300.bin'
     emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
     post_size = 200
     df_all, word_to_id, embedding = preprocess_df(text_dir, emb_dir, filename, emotions, post_size)
@@ -176,7 +176,7 @@ def main():
               'max_grad_norm': 5.0, # Maximum norm of gradient
               'init_scale': 0.1, # Weights initialization scale
               'initial_lr': 1e-3,
-              'lr_decay': 0.2,
+              'lr_decay': 0.5,
               'max_epoch_no_decay': 2, # Number of epochs without decaying learning rate
               'nb_epochs': 10} # Maximum number of epochs
     
@@ -186,7 +186,7 @@ def main():
         init_scale = config['init_scale']
         initializer = tf.random_uniform_initializer(-init_scale, init_scale)    
         with tf.variable_scope('Model', reuse=None, initializer=initializer):
-            config['nb_epochs'] = 5
+            config['nb_epochs'] = 10
             m_train = CharModel(config)
         sess.run(tf.global_variables_initializer())
         sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: embedding})
@@ -209,6 +209,3 @@ def main():
          #   m_test =  CharModel(config)
         #run_model(sess, m_test, test_data, is_training=False)
         print('Finished')
-
-if __name__ == '__main__':
-    main()

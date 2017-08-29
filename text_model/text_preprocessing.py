@@ -1,15 +1,16 @@
 import os
 import re
+import gensim
 
 import numpy as np
 import pandas as pd
 
 # string.punctuation with hashtag removed
-_PUNCTUATION = '!"$%&\'()*+,./:;<=>?[\\]^_`{|}~'
+_PUNCTUATION = u'!"$%&\'()*+,./:;<=>?[\\]^_`{|}~'
 
 _MIN_ENGLISH_WORDS_IN_POST = 5
 
-def _load_embedding_weights(text_dir, emb_dir, filename):
+def _load_embedding_weights_glove(text_dir, emb_dir, filename):
     """Load the word embedding weights from a pre-trained model.
     
     Parameters:
@@ -26,10 +27,30 @@ def _load_embedding_weights(text_dir, emb_dir, filename):
     with open(os.path.join(text_dir, emb_dir, filename), 'rb') as f:
         for line in f.readlines():
             row = line.strip().split(' ')
-            vocabulary.append(row[0])
+            # Convert to unicode
+            vocabulary.append(row[0].decode('utf-8', 'ignore'))
             embedding.append(map(np.float32, row[1:]))
         embedding = np.array(embedding)
         print('Finished loading word embedding weights.')
+    return vocabulary, embedding
+
+def _load_embedding_weights_word2vec(text_dir, emb_dir, filename):
+    """Load the word embedding weights from a pre-trained model.
+    
+    Parameters:
+        text_dir: The directory containing the text model.
+        emb_dir: The subdirectory containing the weights.
+        filename: The name of the binary file.
+        
+    Returns:
+        vocabulary: A list containing the words in the vocabulary.
+        embedding: A numpy array of the weights.
+    """
+    word2vec_dir = os.path.join(text_dir, emb_dir, filename)
+    model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_dir, binary=True)
+    vocabulary = model.index2word
+    embedding = model.syn0
+    print('Finished loading word embedding weights.')
     return vocabulary, embedding
 
 def _str_list_to_set(str_list):
@@ -80,7 +101,7 @@ def _paragraph_to_ids(paragraph, word_to_id, post_size):
 def preprocess_df(text_dir, emb_dir, filename, emotions, post_size):
     """Preprocess emotion dataframes.
     """
-    vocabulary, embedding = _load_embedding_weights(text_dir, emb_dir, filename)
+    vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
     vocab_size, embedding_dim = embedding.shape
     word_to_id = dict(zip(vocabulary, range(vocab_size)))
     # Unknown words = vector with zeros
