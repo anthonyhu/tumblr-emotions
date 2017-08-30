@@ -135,3 +135,30 @@ def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
 
     return df_all, word_to_id, embedding
 
+def preprocess_one_df(vocabulary, embedding, emotion, post_size):
+    """Preprocess one dataframe for the image/text model.
+    """
+    vocab_size, embedding_dim = embedding.shape
+    word_to_id = dict(zip(vocabulary, range(vocab_size)))
+    # Unknown words = vector with zeros
+    embedding = np.concatenate([embedding, np.zeros((1, embedding_dim))])
+
+    path = os.path.join('data', emotion + '.csv')
+    df_emotion = _df_with_hashtag_in_post(pd.read_csv(path, encoding='utf-8'), emotion)
+
+    vocab_set = set(vocabulary)
+    mask = df_emotion['text'].map(lambda x: _is_valid_text(x, vocab_set))
+    df_emotion =  df_emotion.loc[mask, :].reset_index(drop=True)
+
+    # Map text to ids
+    #df_all['text_list'] = df_all['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size))
+
+    # Binarise emotions
+    #emotion_dict = dict(zip(emotions, range(len(emotions))))
+    #df_all['search_query'] =  df_all['search_query'].map(emotion_dict)
+
+    # Add <ukn> word to dictionary
+    #word_to_id['<ukn>'] = vocab_size
+
+    return df_emotion#, word_to_id, embedding
+

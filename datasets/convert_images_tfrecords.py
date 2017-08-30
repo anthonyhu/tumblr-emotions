@@ -35,15 +35,23 @@ import tensorflow as tf
 from scipy.misc import imread, imresize
 from slim.nets import inception
 from datasets import dataset_utils
+from text_model.text_preprocessing import preprocess_one_df
+from text_model.text_preprocessing import _load_embedding_weights_glove, _load_embedding_weights_word2vec
 
 # The number of images in the validation set.
-_NUM_VALIDATION = 50
+#_NUM_VALIDATION = 50
 
 # Seed for repeatability.
 _RANDOM_SEED = 0
 
 # The number of shards per dataset split.
 _NUM_SHARDS = 5
+
+# Number of words in a post
+_POST_SIZE = 200
+
+# Filename containing the train/valid split size
+_TRAIN_VALID_FILENAME = 'train_valid_split.txt'
 
 
 class ImageReader(object):
@@ -150,6 +158,59 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir,
   sys.stdout.write('\n')
   sys.stdout.flush()
 
+def _convert_dataset_with_text(split_name, filenames, class_names_to_ids, dataset_dir, df_dict, 
+                     tfrecords_subdir='tfrecords'):
+  """Converts the given filenames to a TFRecords dataset.
+
+  Args:
+    split_name: The name of the dataset, either 'train' or 'validation'.
+    filenames: A list of absolute paths to png or jpg images.
+    class_names_to_ids: A dictionary from class names (strings) to ids
+      (integers).
+    dataset_dir: The directory where the converted datasets are stored.
+    tfrecords_subdir: A subdirectory to save the TFRecords dataset
+  """
+  assert split_name in ['train', 'validation']
+
+  num_per_shard = int(math.ceil(len(filenames) / float(_NUM_SHARDS)))
+
+  with tf.Graph().as_default():
+    image_reader = ImageReader()
+
+    with tf.Session() as sess:
+
+      for shard_id in range(_NUM_SHARDS):
+        output_filename = _get_dataset_filename(
+            dataset_dir, tfrecords_subdir, split_name, shard_id)
+
+        with tf.python_io.TFRecordWriter(output_filename) as tfrecord_writer:
+          start_ndx = shard_id * num_per_shard
+          end_ndx = min((shard_id+1) * num_per_shard, len(filenames))
+          for i in range(start_ndx, end_ndx):
+            sys.stdout.write('\r>> Converting image %d/%d shard %d' % (
+                i+1, len(filenames), shard_id))
+            sys.stdout.flush()
+            # Read the filename:
+            image_data = tf.gfile.FastGFile(filenames[i], 'rb').read()
+            height, width = image_reader.read_image_dims(sess, image_data)
+
+            class_name = os.path.basename(os.path.dirname(filenames[i]))
+            class_id = class_names_to_ids[class_name]
+
+            # Get index of the post
+            base = os.path.basename(filenames[i])
+            index = (int)(os.path.splitext(base)[0])
+            text_data = df_dict[class_name].iloc[index]['text']
+            # Convert to str, as only strings are accepted by tfexample
+            text_data = text_data.encode('ascii', 'ignore')
+
+            example = dataset_utils.image_to_tfexample_with_text(
+                image_data, b'jpg', height, width, text_data, class_id)
+            tfrecord_writer.write(example.SerializeToString())
+
+  sys.stdout.write('\n')
+  sys.stdout.flush()
+
 
 def _clean_up_temporary_files(dataset_dir, photos_subdir='photos'):
   """Removes temporary files used to create the dataset.
@@ -206,6 +267,75 @@ def convert_images(dataset_dir, num_valid, photos_subdir='photos', tfrecords_sub
                    dataset_dir, tfrecords_subdir)
   _convert_dataset('validation', validation_filenames, class_names_to_ids,
                    dataset_dir, tfrecords_subdir)
+
+  # Write the train/validation split size
+  train_valid_split = dict(zip(['train', 'validation'], [len(photo_filenames) - num_valid, num_valid]))
+  train_valid_filename = os.path.join(dataset_dir, photos_subdir, _TRAIN_VALID_FILENAME)
+  with tf.gfile.Open(train_valid_filename, 'w') as f:
+    for split_name in train_valid_split:
+      size = train_valid_split[split_name]
+      f.write('%s:%d\n' % (split_name, size))
+
+  # Finally, write the labels file:
+  labels_to_class_names = dict(zip(range(len(class_names)), class_names))
+  dataset_utils.write_label_file(labels_to_class_names, dataset_dir, photos_subdir)
+
+  #_clean_up_temporary_files(dataset_dir)
+  print('\nFinished converting the dataset!')
+
+def convert_images_with_text(dataset_dir, num_valid, photos_subdir='photos', tfrecords_subdir='tfrecords'):
+  """Downloads the photos and convert them to TFRecords.
+
+  Parameters:
+    dataset_dir: The data directory.
+    photos_subdir: The subdirectory where the photos are stored.
+    tfrecords_subdir: The subdirectory to store the TFRecords files.
+  """
+  # Create the tfrecords_subdir if it doesn't exist
+  if not tf.gfile.Exists(os.path.join(dataset_dir, tfrecords_subdir)):
+    tf.gfile.MakeDirs(os.path.join(dataset_dir, tfrecords_subdir))
+
+  if _dataset_exists(dataset_dir, photos_subdir):
+    print('Dataset files already exist. Exiting without re-creating them.')
+    return
+
+  photo_filenames, class_names = _get_filenames_and_classes(dataset_dir, photos_subdir)
+  class_names_to_ids = dict(zip(class_names, range(len(class_names))))
+
+  # Divide into train and test:
+  random.seed(_RANDOM_SEED)
+  random.shuffle(photo_filenames)
+  training_filenames = photo_filenames[num_valid:]
+  validation_filenames = photo_filenames[:num_valid]
+
+  # Load dataframes
+  df_dict = dict()
+  emotions = ['happy', 'sad', 'scared', 'angry', 'surprised', 'disgusted']
+  emb_name = 'glove'
+  text_dir = 'text_model'
+  emb_dir = 'embedding_weights'
+  filename = 'glove.6B.50d.txt'
+  if emb_name == 'word2vec':
+      vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
+  else:
+      vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
+
+  for emotion in emotions:
+    df_dict[emotion] = preprocess_one_df(vocabulary, embedding, emotion, _POST_SIZE)
+
+  # First, convert the training and validation sets.
+  _convert_dataset_with_text('train', training_filenames, class_names_to_ids,
+                   dataset_dir, df_dict, tfrecords_subdir)
+  _convert_dataset_with_text('validation', validation_filenames, class_names_to_ids,
+                   dataset_dir, df_dict, tfrecords_subdir)
+
+  # Write the train/validation split size
+  train_valid_split = dict(zip(['train', 'validation'], [len(photo_filenames) - num_valid, num_valid]))
+  train_valid_filename = os.path.join(dataset_dir, photos_subdir, _TRAIN_VALID_FILENAME)
+  with tf.gfile.Open(train_valid_filename, 'w') as f:
+    for split_name in train_valid_split:
+      size = train_valid_split[split_name]
+      f.write('%s:%d\n' % (split_name, size))
 
   # Finally, write the labels file:
   labels_to_class_names = dict(zip(range(len(class_names)), class_names))
