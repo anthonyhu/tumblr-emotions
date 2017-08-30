@@ -21,7 +21,6 @@ if __name__ == '__main__':
 
         # Fine-tune model
         dataset_dir = 'data'
-        checkpoints_dir = 'image_model/pretrained_model'
         train_dir = 'image_model/fine_tuned_model'
         fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps=num_steps)
         print('The training took: {0:.1f} mins'.format((time() - t0) / 60))

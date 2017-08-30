@@ -15,7 +15,7 @@ from slim.preprocessing import inception_preprocessing
 #from slim.nets import inception
 from image_model import inception_v1
 from datasets import dataset_utils
-from datasets.convert_to_dataset import get_split
+from datasets.convert_to_dataset import get_split, get_split_with_text
 from datasets.convert_images_tfrecords import get_numpy_data
 
 # Seed for reproducibility
@@ -152,6 +152,82 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
                #     print(session.run(v))
                 #    print('\n')
 
+            acc_valid = session.run(accuracy_valid)
+            print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
+            sys.stdout.flush()
+            train_step_fn.step += 1
+            return [total_loss, should_stop]
+        
+        train_step_fn.step = 0
+
+        # Run the training:
+        final_loss = slim.learning.train(
+            train_op,
+            logdir=train_dir,
+            init_fn=_get_init_fn(checkpoints_dir),
+            train_step_fn=train_step_fn,
+            number_of_steps=num_steps)
+            
+    print('Finished training. Last batch loss {0:.3f}'.format(final_loss))
+
+def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps, learning_rate):
+    """Fine tune the inception model, retraining the last layer.
+
+    Parameters:
+        dataset_dir: The directory containing the data.
+        checkpoints_dir: The directory contained the pre-trained model.
+        train_dir: The directory to save the trained model.
+        num_steps: The number of steps training the model.
+    """
+    if tf.gfile.Exists(train_dir):
+        # Delete old model
+        tf.gfile.DeleteRecursively(train_dir)
+    tf.gfile.MakeDirs(train_dir)
+
+    with tf.Graph().as_default():
+        tf.logging.set_verbosity(tf.logging.INFO)
+        
+        dataset = get_split_with_text('train', dataset_dir)
+        image_size = inception_v1.default_image_size
+        images, _, labels = _load_batch(dataset, height=image_size, width=image_size)
+
+        # Load validation data
+        dataset_valid = get_split_with_text('validation', dataset_dir)
+        images_valid, _, labels_valid = _load_batch(dataset_valid, batch_size=dataset_valid.num_samples, shuffle=False, 
+                                                    height=image_size, width=image_size)
+        
+        # Create the model, use the default arg scope to configure the batch norm parameters.
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, is_training=True)
+            logits_valid, _ = inception_v1.inception_v1(images_valid, num_classes=dataset_valid.num_classes, 
+                                           is_training=False, reuse=True)
+            
+        # Specify the loss function:
+        one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
+        slim.losses.softmax_cross_entropy(logits, one_hot_labels)
+        total_loss = slim.losses.get_total_loss()
+
+        # Create some summaries to visualize the training process:
+        tf.summary.scalar('losses/Total_Loss', total_loss)
+      
+        # Specify the optimizer and create the train op:
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        train_op = slim.learning.create_train_op(total_loss, optimizer)
+
+        # Accuracy metrics
+        accuracy_valid = slim.metrics.accuracy(tf.cast(labels_valid, tf.int32),
+                                               tf.cast(tf.argmax(logits_valid, 1), tf.int32))
+
+        def train_step_fn(session, *args, **kwargs):
+            total_loss, should_stop = train_step(session, *args, **kwargs)
+
+            #variables_to_print = ['InceptionV1/Conv2d_2b_1x1/weights:0', 'InceptionV1/Mixed_4b/Branch_3/Conv2d_0b_1x1/weights:0',
+             #                     'InceptionV1/Logits/Conv2d_0c_1x1/weights:0']
+            #for v in slim.get_model_variables():
+             #   if v.name in variables_to_print:
+              #      print(v.name)
+               #     print(session.run(v))
+                #    print('\n')
             acc_valid = session.run(accuracy_valid)
             print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
             sys.stdout.flush()
