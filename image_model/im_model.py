@@ -246,6 +246,65 @@ def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps
             
     print('Finished training. Last batch loss {0:.3f}'.format(final_loss))
 
+def evaluate_model(checkpoint_dir, log_dir, num_evals):
+    """Visualise results with: tensorboard --logdir=logdir
+    
+    Parameters:
+        checkpoint_dir: Checkpoint of the saved model during training.
+        log_dir: Directory to save logs.
+        num_evals: Number of batches to evaluate (mean of the batches is displayed).
+    """
+    
+    with tf.Graph().as_default():
+        tf.logging.set_verbosity(tf.logging.INFO)
+
+        dataset_dir = 'data'
+        # Load train data
+        image_size = inception_v1.default_image_size
+
+        dataset_train = get_split_with_text('train', dataset_dir)
+        images_train, _, labels_train = _load_batch(dataset_train, batch_size=32, shuffle=False, 
+                                                    height=image_size, width=image_size)
+
+        # Create the model, use the default arg scope to configure the batch norm parameters.
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            logits_train, _ = inception_v1.inception_v1(images_train, num_classes=dataset_train.num_classes, 
+                                                        is_training=False, reuse=True)
+        # Accuracy metrics
+        accuracy_train = slim.metrics.streaming_accuracy(tf.cast(labels_train, tf.int32),
+                                                         tf.cast(tf.argmax(logits_train, 1), tf.int32))
+
+        # Load validation data
+        dataset_valid = get_split_with_text('validation', dataset_dir)
+        images_valid, _, labels_valid = _load_batch(dataset_valid, batch_size=32, shuffle=False, 
+                                                    height=image_size, width=image_size)
+
+        # Create the model, use the default arg scope to configure the batch norm parameters.
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            logits_valid, _ = inception_v1.inception_v1(images_valid, num_classes=dataset_valid.num_classes, 
+                                                        is_training=False, reuse=True)
+        # Accuracy metrics
+        accuracy_valid = slim.metrics.streaming_accuracy(tf.cast(labels_valid, tf.int32),
+                                                         tf.cast(tf.argmax(logits_valid, 1), tf.int32))
+
+        # Choose the metrics to compute:
+        names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
+            'accuracy_train': accuracy_train,
+            'accuracy_valid': accuracy_valid,
+        })
+
+        for metric_name, metric_value in names_to_values.iteritems():
+            tf.summary.scalar(metric_name, metric_value)
+
+        # Evaluate every eval_interval_secs secs or if not specified,
+        # every time the checkpoint_dir changes
+        slim.evaluation.evaluation_loop(
+            '',
+            checkpoint_dir,
+            log_dir,
+            num_evals=num_evals,
+            eval_op=names_to_updates.values())
+        
 def softmax_regression(num_valid, C):
     """Run a softmax regression on the images.
 
