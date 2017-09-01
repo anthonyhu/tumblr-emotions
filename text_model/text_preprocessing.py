@@ -138,10 +138,10 @@ def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
 def preprocess_one_df(vocabulary, embedding, emotion, post_size):
     """Preprocess one dataframe for the image/text model.
     """
-    vocab_size, embedding_dim = embedding.shape
-    word_to_id = dict(zip(vocabulary, range(vocab_size)))
+    #vocab_size, embedding_dim = embedding.shape
+    #word_to_id = dict(zip(vocabulary, range(vocab_size)))
     # Unknown words = vector with zeros
-    embedding = np.concatenate([embedding, np.zeros((1, embedding_dim))])
+    #embedding = np.concatenate([embedding, np.zeros((1, embedding_dim))])
 
     path = os.path.join('data', emotion + '.csv')
     df_emotion = _df_with_hashtag_in_post(pd.read_csv(path, encoding='utf-8'), emotion)
