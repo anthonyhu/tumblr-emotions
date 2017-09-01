@@ -2,11 +2,12 @@ import sys
 import tensorflow as tf
 from time import time
 from image_model.im_model import download_pretrained_model
-from image_model.im_model import fine_tune_model
+from image_model.im_model import fine_tune_model_with_text
 
 if __name__ == '__main__':
     args = sys.argv[1:]
     num_steps = (int)(args.pop(0))
+    learning_rate = (float)(args.pop(0))
 
     if len(args) > 0:
         sys.stderr.write('Too many arguments given.\n')
@@ -22,5 +23,6 @@ if __name__ == '__main__':
         # Fine-tune model
         dataset_dir = 'data'
         train_dir = 'image_model/fine_tuned_model'
-        fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps=num_steps)
+        fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps=num_steps, 
+                                  learning_rate=learning_rate)
         print('The training took: {0:.1f} mins'.format((time() - t0) / 60))

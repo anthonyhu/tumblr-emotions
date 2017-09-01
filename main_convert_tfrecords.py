@@ -1,5 +1,5 @@
 import sys
-from datasets.convert_images_tfrecords import convert_images
+from datasets.convert_images_tfrecords import convert_images_with_text
 
 if __name__ == '__main__':
     args = sys.argv[1:]
@@ -9,4 +9,4 @@ if __name__ == '__main__':
         sys.stderr.write('Too many arguments given.\n')
     else:
         dataset_dir = 'data'
-        convert_images(dataset_dir, num_valid)
+        convert_images_with_text(dataset_dir, num_valid)
