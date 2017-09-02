@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow.contrib import slim
 from tensorflow.contrib.slim.python.slim.learning import train_step
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from slim.preprocessing import inception_preprocessing
@@ -362,5 +363,25 @@ def softmax_regression(num_valid, C):
 
     accuracy_train = accuracy_score(logistic.predict(X_train), y_train)
     valid_accuracy = accuracy_score(logistic.predict(X_valid), y_valid)
+    print('Training accuracy: {0:.3f}'.format(accuracy_train))
+    print('Validation accuracy: {0:.3f}'.format(valid_accuracy))
+
+def forest(num_valid, n_estimators, max_depth):
+    """Run a Random Forest on the images.
+
+    Parameters:
+        num_valid: Size of the validation set.
+        n_estimators: Number of trees.
+        max_depth: Maximum depth of a tree.
+    """
+    # Load data
+    X_train, X_valid, y_train, y_valid = get_numpy_data('data', num_valid)
+    forest = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, 
+                                    random_state=_RANDOM_SEED)
+    print('Start training Random Forest.')
+    forest.fit(X_train, y_train)
+
+    accuracy_train = accuracy_score(forest.predict(X_train), y_train)
+    valid_accuracy = accuracy_score(forest.predict(X_valid), y_valid)
     print('Training accuracy: {0:.3f}'.format(accuracy_train))
     print('Validation accuracy: {0:.3f}'.format(valid_accuracy))
