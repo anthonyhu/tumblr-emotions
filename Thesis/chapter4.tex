@@ -14,7 +14,7 @@ It's unclear whether the user is sad or disgusted. Only by reading the text ``Me
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Word Embedding}
-One way to map text into numbers would be to use a dictionary that maps each word in the vocabulary (containing all the words of every Tumblr posts) to an integer. Then, you could transform any word into an one-hot vector, a vector of size the number of words in the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance). A major drawback is that this will cause data sparsity as the vocabulary size can be huge. For example, the number of 5-word sentences with a vocabulary size of 1000, is $1000^5=10^{15}$. This problem is specific to text as image and audio processing systems train on rich high-dimensional data (pixel intensities for images and spectral densities for audio), as shown by Figure \ref{comparison-text}.
+One way to map text into numbers would be to use a dictionary that maps each word in the vocabulary (containing all the words of every Tumblr posts) to an integer. Then, you could transform any word into an one-hot vector, a vector of size the number of words in the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance). A major drawback is that this will cause data sparsity as the vocabulary size can be huge. For example, the number of 5-word sentences with a vocabulary size of 1000, is $1000^5=10^{15}$. This sparsity problem is specific to text as in contrary, image and audio processing systems train on rich high-dimensional data (pixel intensities for images and spectral densities for audio), as shown by Figure \ref{comparison-text}.
 
 \begin{figure}[H]
     \centering
@@ -59,13 +59,13 @@ To learn those weights, the network is minimising the cross-entropy loss given a
 With $\text{score}(w_c, w_t)$ being the element in position $w_c$ in the output layer (right before the softmax activation function).
 
 \subsection{Intuition}
-In this model, two words that have similar contexts should output similar probability distribution. One way to produce that is to simply learn a similar word embedding for these two words. Therefore, words with similar context will have a similar vector representation which is exactly what we wanted.
+In this model, two words that have similar contexts should output similar probability distributions. One way to produce that is to simply learn a similar word embedding for these two words. Therefore, words with similar context will have a similar vector representation which is exactly what we wanted.
 
 Which words have similar contexts? Synonyms are a good example: `brave' and `fearless' are two words that must appear in similar contexts. The same applies for words that are related such as `physics' and `thermodynamics' or words with the same stem, e.g. `apples' and 'apple'. 
 
 \newpage
 \section{Training the Model}
-Training the network described above involves, with a vocabulary size of 10 000: 10 000$\times300$=3M parameters for the hidden layer and $300\times$10 000=3M for the output layer. In fact, the actual Word2Vec model contain 3M words, the number of parameters is thus 2$\times$3M$\times$300=1.8B. That's a huge neural network that will need a really large training set to train those parameters, which is not feasible without a few tweaks:
+Training the network described above involves, with a vocabulary size of 10,000: 10,000$\times300$=3,000,000 parameters for the hidden layer and $300\times$10,000=3,000,000 for the output layer. In fact, the actual Word2Vec model contain 3M words, the number of parameters is thus 2$\times$3,000,000$\times$300=1,800,000,000. That's a huge neural network that will need a really large training set to train those parameters, which is not feasible without a few tweaks:
 
 \begin{enumerate}
     \item Negative sampling
@@ -118,7 +118,7 @@ Calculating the expectation $\mathbb{E}_{\tilde{w}\sim Q}$ would involve summing
      &= -\left[\text{log}~P(y=1| w_c, w_t) + \sum_{j=1}^k\text{log}~P(y=0|\tilde{w}_j, w_t)\right]
 \end{align}
 
-We still haven't a proper derivation of the probability $P(y=1| w_c, w_t)$. Note that for each context word $w_c$ given its target word $w_t$, we're generating $k$ noise samples from a distribution $Q$. There are two distributions at stake: the distribution $P_{\text{train}}$ of the context word $w_c$ given $w_t$ which is simply the softmax computed earlier:
+We still haven't given a proper derivation of the probability $P(y=1| w_c, w_t)$. Note that for each context word $w_c$ given its target word $w_t$, we're generating $k$ noise samples from a distribution $Q$. There are two distributions at stake: the distribution $P_{\text{train}}$ of the context word $w_c$ given $w_t$ which is simply the softmax computed earlier:
 \begin{equation}
     P_{\text{train}}(w_c|w_t) = \text{softmax}(w_c, w_t)
 \end{equation}
@@ -207,7 +207,7 @@ Note that the formula (\ref{subsampling}) is different from the one in \cite{wor
 
 \subsection{Word2Vec Pre-Trained Model}
 
-For our task of emotion prediction, we will be using a pre-trained model to convert the text in Tumblr posts into rich high-dimensional vectors. The model was trained on Google News dataset (aggregation of news from all around the world) containing about 100 billion words. Each word in the vocabulary (3 million words) are embedded into a 300 dimensional vector. 
+For our task of emotion prediction, we will be using a pre-trained model to convert the text in Tumblr posts into rich high-dimensional vectors. The model was trained on Google News dataset (aggregation of news from all around the world, including blog posts) containing about 100 billion words. Each word in the vocabulary (3 million words) are embedded into a 300 dimensional vector. 
 
 The skip-gram model had the following parameters:
 \begin{itemize}

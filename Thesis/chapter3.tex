@@ -153,7 +153,8 @@ Earlier features of ConvNets contain more generic features (such as edges or col
 \subsection{Motivation}
 After AlexNet proved that convolutional networks outperformed traditional machine learning models, the trend to achieve even better results was to build wider (more units per layer) and deeper (more layers) networks and to add dropout to address overfitting. However, bigger networks are more expensive to train (more parameters) and could not be usable for real-time prediction if a forward-pass takes more than a second for instance. Moreover, if the increased capacity is not used efficiently, for example if most added weights are close to zero, then the extra depth and width will be completely wasted.
 
-To address this problem, we could replace the fully connected layers by sparse ones, even inside convolutions \cite{googlenet}. Not only would it mimic more closely biological systems, but it would also have more theoretical ground thanks to the work of Arora et al. \cite{arora}. They proved that if the probability distribution of a dataset can be represented by a large, very sparse neural network, then it's possible to build the optimal network layer after layer by clustering highly correlated neurons of the preceding layer. 
+To address this problem, we could replace the fully connected layers by sparse ones, even inside convolutions \cite{googlenet}. Not only would it mimic more closely biological systems, but it would also have more theoretical ground thanks to the work of Arora et al. \cite{arora}. They proved that if the probability distribution of a dataset can be represented by a large, very sparse neural network, then it's possible to build the optimal network layer after layer by clustering highly correlated neurons of the preceding layer. By clustering, they mean regrouping neurons into a single entity, by assigning weights to the neurons, that will be fed to the next layer.
+This process also resonates well with the Hebbian principle {\em neurons that fire together, wire together} \cite{hebbian}.
 
 Current networks architectures are not using sparse layers as the libraries are heavily optimised for dense matrix multiplication. Training sparse layers would incur considerable overhead (lookups, cache) that are not handled by today's computing infrastructures. However, the Inception module is an elegant solution to add more expressiveness to a network while keeping the number of parameters low. 
 
@@ -174,13 +175,13 @@ In the Inception module, we perform all of the above operations and let the netw
     \caption{Naive Inception module \cite{googlenet}}
 \end{figure}
 
-But wait.. How is this supposed to keep the number of parameters low? This is actually the naive implementation of the Inception module. One key component are the $1\times 1$ convolutions, which behave like clustering the highly correlated neurons, before the large convolutions. Let's take an example to understand: suppose at an arbitrary layer, your input is size $(14, 14, 480)$.
+As it is, the Inception module seems to rather increase the number of parameters! But this is actually the naive implementation of the module. One key component are the $1\times 1$ convolutions, which behave like clustering the highly correlated neurons, before the large convolutions. Let's take an example to understand: suppose at an arbitrary layer, your input is size $(14, 14, 480)$.
 \begin{itemize}
 \item A \textbf{$\mathbf{5\times 5}$ convolution, depth 48}: requires $(14^2)(480)(5^2)(48) = 112,896,000$ operations (supposing stride 1 and zero-padding).
 \item An \textbf{$\mathbf{1\times 1}$ convolution, depth 16, followed by a $\mathbf{5\times 5}$ convolution, depth 48:} requires $[(14^2)(480)(1^2)(16)] + [(14^2)(16)(5^2)(48)] = 5,268,480$ operations.
 \end{itemize}
 
-That's more than twenty times faster! The number of parameters is also reduced by twenty as the reduction factor is the same (to get the actual number of parameters, you only need to divide the above by $14^2)$. The final Inception module is the following:
+The second operation with $1\times 1$ convolutions is more than twenty times faster! The number of parameters is also reduced by twenty as the reduction factor is the same (to get the actual number of parameters, you only need to divide the above by $14^2)$. The final Inception module is the following:
 
 \begin{figure}[H]
     \centering
@@ -203,11 +204,11 @@ In our model, we got rid of the last linear layer and replaced it with another l
 
 \newpage
 \section{Results}
-Are the images enough to accurately determine the emotion conveyed by the user? We tried several machine learning models on the raw images, that were resized to a fixed size $(224, 224, 3)$. For now (need more time to train more data), the train set has 100 000 images and the test set has 20 000 images.
+Are the images enough to accurately determine the emotion conveyed by the user? We tried several machine learning models on the raw images, that were resized to a fixed size $(224, 224, 3)$.
 \begin{itemize}
     \item \textbf{Softmax regression}: with $\text{L}_2$ regularisation of $0.01$.
     \item \textbf{Random Forest Classification}: with $1000$ trees and max depth of $5$.
-    \item \textbf{5-layer Convolutional Neural Network}: (each convolution is with stride 1, zero-padding to keep image size and followed by ReLU)
+    \item \textbf{5 layers Convolutional Neural Network}: (each convolution is with stride 1, zero-padding to keep image size and followed by ReLU)
     \begin{itemize}[topsep=0pt]
         \itemsep-1em
         \item $3\times 3$ convolution, depth 8
@@ -223,20 +224,35 @@ Are the images enough to accurately determine the emotion conveyed by the user? 
         \itemsep-1em
         \item 20 epochs (1 epoch = 1 full sampling of the training data)
         \item Mini-batch size of 32
-        \item Adam optimizer with learning rate $1\mathrm{e}{-5}$
+        \item Adam optimizer with learning rate $1\mathrm{e}{-6}$
     \end{itemize}
 \end{itemize}
 
-Here are the results, the measured accuracy being the fraction of correctly classified images on the test set:
+After the preprocessing described in Section 2, the dataset contains 295,508 posts that we split as 80\% train set and 20\% test set. The accuracy is the fraction of correctly classified images. These accuracies have to be compared to a baseline: random guessing. Actually this guessing will include the prior probabilities of the classes: 
 \begin{table}[H]
 \begin{center}
-    \begin{tabular}{| l | l | p{5cm} |}
+    \begin{tabular}{| c | c | c | c | c | c | c |}
     \hline
-    Model & Parameters & Test accuracy \\ \hline
-    \textbf{Softmax regression} & $\text{L}_2$ reg: 0.01 & 0.18  \\ \hline
-    \textbf{Random Forest} & 1000 trees & 0.20 \\ \hline
-    \textbf{5-layer ConvNet} & see above & ?? \\ \hline
-    \textbf{Inception fine-tuned} & see above & ?? \\
+     & \textbf{happiness} & \textbf{sadness} &  \textbf{anger} & \textbf{surprise} & \textbf{fear} & \textbf{disgust} \\ \hline
+    \textbf{Prior proba.} & 0.32 & 0.22 & 0.19 & 0.03 & 0.22 & 0.02 \\
+    \hline
+    \end{tabular}
+\end{center} 
+\caption{Prior probabilities of the classes}
+\end{table}
+
+And the results:
+\begin{table}[H]
+\begin{center}
+    \begin{tabular}{| l | c | c |}
+    \hline
+    & \textbf{Train} & \textbf{Test} \\
+    & \textbf{accuracy} & \textbf{accuracy} \\ \hline
+    \textbf{Baseline} & 0.24 & 0.24 \\ \hline
+    \textbf{Softmax regression} & 0.18 & \\ \hline
+    \textbf{Random Forest}  & 0.20 & \\ \hline
+    \textbf{5 layers ConvNet}  &  &\\ \hline
+    \textbf{Inception fine-tuned}  & & \\
     \hline
     \end{tabular}
 \end{center} 
