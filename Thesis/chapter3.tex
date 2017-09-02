@@ -248,17 +248,47 @@ And the results:
     \hline
     & \textbf{Train} & \textbf{Test} \\
     & \textbf{accuracy} & \textbf{accuracy} \\ \hline
-    \textbf{Baseline} & 0.24 & 0.24 \\ \hline
-    \textbf{Softmax regression} & 0.18 & \\ \hline
-    \textbf{Random Forest}  & 0.20 & \\ \hline
-    \textbf{5 layers ConvNet}  &  &\\ \hline
-    \textbf{Inception fine-tuned}  & & \\
+    \textbf{Random guessing} & 0.24 & 0.24 \\ \hline
+    \textbf{Softmax regression} & 0.41 & 0.34 \\ \hline
+    \textbf{Random forest}  & 0.60 & 0.44\\ \hline
+    %\textbf{5 layers ConvNet}  &  &\\ \hline
+    \textbf{Inception fine-tuned}  & 0.48 & 0.42 \\
     \hline
     \end{tabular}
 \end{center} 
 \caption{Comparison of models using raw images}
 \end{table}
 
+The training process of the Inception fine-tuning was monitored thanks to Tensorboard:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/image_model_loss_cleaned.jpg}
+    \caption{Loss function of the Inception fine-tuned model}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/image_model_accuracies_cleaned.jpg}
+    \caption{Train/Validation accuracies of the Inception fine-tuned model}
+\end{figure}
+
+The results are quite satisfactory as even if some images are easy to read:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/happy_easy.jpg}
+    \caption{Easy happy images}
+\end{figure}
+
+Some other images are more challenging:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/happy_hard.jpg}
+    \caption{Hard happy images}
+\end{figure}
+
+- visualise classified images with confidence, misclassified images
 
 
 
