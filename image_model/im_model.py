@@ -297,6 +297,54 @@ def evaluate_model(checkpoint_dir, log_dir, num_evals):
             log_dir,
             num_evals=num_evals,
             eval_op=names_to_updates.values())
+
+def evaluate_model_2(checkpoint_dir, log_dir, mode, num_evals):
+    """Visualise results with: tensorboard --logdir=logdir. Now has train/validation curves on the same plot
+    
+    Parameters:
+        checkpoint_dir: Checkpoint of the saved model during training.
+        log_dir: Directory to save logs.
+        mode: train or validation.
+        num_evals: Number of batches to evaluate (mean of the batches is displayed).
+    """
+    
+    with tf.Graph().as_default():
+        tf.logging.set_verbosity(tf.logging.INFO)
+
+        dataset_dir = 'data'
+        # Load train data
+        image_size = inception_v1.default_image_size
+
+        dataset = get_split_with_text(mode, dataset_dir)
+        images, _, labels = _load_batch(dataset, batch_size=32, shuffle=False, 
+                                        height=image_size, width=image_size)
+
+        # Create the model, use the default arg scope to configure the batch norm parameters.
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, 
+                                                  is_training=False, reuse=True)
+        # Accuracy metrics
+        accuracy = slim.metrics.streaming_accuracy(tf.cast(labels, tf.int32),
+                                                   tf.cast(tf.argmax(logits, 1), tf.int32))
+
+        # Choose the metrics to compute:
+        names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
+            'accuracy': accuracy,
+        })
+
+        for metric_name, metric_value in names_to_values.iteritems():
+            tf.summary.scalar(metric_name, metric_value)
+
+        log_dir = os.path.join(log_dir, mode)
+
+        # Evaluate every eval_interval_secs secs or if not specified,
+        # every time the checkpoint_dir changes
+        slim.evaluation.evaluation_loop(
+            '',
+            checkpoint_dir,
+            log_dir,
+            num_evals=num_evals,
+            eval_op=names_to_updates.values())
         
 def softmax_regression(num_valid, C):
     """Run a softmax regression on the images.
