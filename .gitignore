@@ -112,3 +112,4 @@ data_chars/
 pretrained_model/
 fine_tuned_model/
 embedding_weights/
+deep_sentiment_model/
