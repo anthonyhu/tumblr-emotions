@@ -222,8 +222,8 @@ def compute_sklearn_features():
 def main_text():
     text_dir = 'text_model'
     emb_dir = 'embedding_weights'
-    filename = 'GoogleNews-vectors-negative300.bin'
-    emb_name = 'word2vec'
+    filename = 'glove.6B.50d.txt'
+    emb_name = 'glove'
     emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
     post_size = 200
     df_all, word_to_id, embedding = preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size)

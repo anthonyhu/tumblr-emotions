@@ -31,6 +31,8 @@ _FILE_PATTERN = 'tumblr_%s_*.tfrecord'
 # Filename containing the train/valid split size
 _TRAIN_VALID_FILENAME = 'train_valid_split.txt'
 
+_POST_SIZE = 200
+
 #SPLITS_TO_SIZES = {'train': 128, 'validation': 30}
 
 #_NUM_CLASSES = 2
@@ -148,7 +150,8 @@ def get_split_with_text(split_name, dataset_dir, photos_subdir='photos', tfrecor
       'image/format': tf.FixedLenFeature((), tf.string, default_value='jpg'),
       'image/class/label': tf.FixedLenFeature(
           [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
-      'text': tf.FixedLenFeature((), tf.string, default_value=''),
+      'text': tf.FixedLenFeature(
+          [_POST_SIZE], tf.int64, default_value=tf.zeros([_POST_SIZE], dtype=tf.int64)),
   }
 
   items_to_handlers = {

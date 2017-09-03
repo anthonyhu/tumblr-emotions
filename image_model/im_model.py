@@ -73,7 +73,47 @@ def _load_batch(dataset, batch_size=32, shuffle=True, height=299, width=299, is_
     
     return images, images_raw, labels
 
-def _get_init_fn(checkpoints_dir, model_name='inception_v1.ckpt'):
+def load_batch_with_text(dataset, batch_size=32, shuffle=True, height=299, width=299, is_training=False):
+    """Load a single batch of data. 
+    
+    Args:
+      dataset: The dataset to load.
+      batch_size: The number of images in the batch.
+      shuffle: Whether to shuffle the data sources and common queue when reading.
+      height: The size of each image after preprocessing.
+      width: The size of each image after preprocessing.
+      is_training: Whether or not we're currently training or evaluating.
+    
+    Returns:
+      images: A Tensor of size [batch_size, height, width, 3], image samples that have been preprocessed.
+      images_raw: A Tensor of size [batch_size, height, width, 3], image samples that can be used for visualization.
+      labels: A Tensor of size [batch_size], whose values range between 0 and dataset.num_classes.
+    """
+    # For validation, if you set the common_queue_capacity to something lower than
+    # batch_size, which is the validation size, then your output will contain duplicates.
+    data_provider = slim.dataset_data_provider.DatasetDataProvider(
+        dataset, shuffle=shuffle, common_queue_capacity=batch_size,
+        common_queue_min=8)
+    image_raw, text, label = data_provider.get(['image', 'text', 'label'])
+    
+    # Preprocess image for usage by Inception.
+    image = inception_preprocessing.preprocess_image(image_raw, height, width, is_training=is_training)
+
+    # Preprocess the image for display purposes.
+    image_raw = tf.expand_dims(image_raw, 0)
+    image_raw = tf.image.resize_images(image_raw, [height, width])
+    image_raw = tf.squeeze(image_raw)
+
+    # Batch it up.
+    images, images_raw, texts, labels = tf.train.batch(
+        [image, image_raw, text, label],
+        batch_size=batch_size,
+        num_threads=1,
+        capacity=2 * batch_size)
+    
+    return images, images_raw, texts, labels
+
+def get_init_fn(checkpoints_dir, model_name='inception_v1.ckpt'):
     """Returns a function run by the chief worker to warm-start the training.
     """
     checkpoint_exclude_scopes=["InceptionV1/Logits", "InceptionV1/AuxLogits"]
@@ -165,7 +205,7 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
         final_loss = slim.learning.train(
             train_op,
             logdir=train_dir,
-            init_fn=_get_init_fn(checkpoints_dir),
+            init_fn=get_init_fn(checkpoints_dir),
             train_step_fn=train_step_fn,
             number_of_steps=num_steps)
             
@@ -232,7 +272,7 @@ def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps
         final_loss = slim.learning.train(
             train_op,
             logdir=train_dir,
-            init_fn=_get_init_fn(checkpoints_dir),
+            init_fn=get_init_fn(checkpoints_dir),
             save_interval_secs=60,
             save_summaries_secs=60,
             #train_step_fn=train_step_fn,

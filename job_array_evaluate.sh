@@ -11,7 +11,7 @@
 #SBATCH --nodes=1
 # CPUs required for each job
 #SBATCH --cpus-per-task=1
-#SBATCH --time=06:00:00
+#SBATCH --time=10:00:00
 # Memory per CPU in megabytes
 #SBATCH --mem-per-cpu=64000
 #SBATCH --array=0-1%2

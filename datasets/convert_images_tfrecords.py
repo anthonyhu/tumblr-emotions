@@ -200,9 +200,9 @@ def _convert_dataset_with_text(split_name, filenames, class_names_to_ids, datase
             # Get index of the post
             base = os.path.basename(filenames[i])
             index = (int)(os.path.splitext(base)[0])
-            text_data = df_dict[class_name].iloc[index]['text']
+            text_data = df_dict[class_name].iloc[index]['text_list']
             # Convert to str, as only strings are accepted by tfexample
-            text_data = text_data.encode('ascii', 'ignore')
+            #text_data = text_data.encode('ascii', 'ignore')
 
             example = dataset_utils.image_to_tfexample_with_text(
                 image_data, b'jpg', height, width, text_data, class_id)

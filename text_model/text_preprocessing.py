@@ -5,8 +5,8 @@ import gensim
 import numpy as np
 import pandas as pd
 
-# string.punctuation with hashtag removed
-_PUNCTUATION = u'!"$%&\'()*+,./:;<=>?[\\]^_`{|}~'
+# string.punctuation
+_PUNCTUATION = u'!"$%&\'()*+,./:;<=>?[\\]^_`{|}~#'
 
 _MIN_ENGLISH_WORDS_IN_POST = 5
 
@@ -81,11 +81,16 @@ def _is_valid_text(paragraph, vocab_set):
         # Check if there are atleast _MIN_ENGLISH_WORDS_IN_POST words in english
         return len(set(words).intersection(vocab_set)) > _MIN_ENGLISH_WORDS_IN_POST
 
-def _paragraph_to_ids(paragraph, word_to_id, post_size):
-    """Convert a paragraph to a list of ids
+def _paragraph_to_ids(paragraph, word_to_id, post_size, emotions):
+    """Convert a paragraph to a list of ids, removing the #emotion.
     """
     words = []
     vocab_size = len(word_to_id)
+
+    # Remove emotion hashtags from the post.
+    emotion_regex = re.compile('|'.join(map(re.escape, ['#' + emotion for emotion in emotions])))
+    paragraph = emotion_regex.sub('', paragraph.lower())
+
     regex = re.compile('[%s]' % re.escape(_PUNCTUATION))
     # Remove punctuation, convert to lower case before splitting
     words = regex.sub('', paragraph).lower().split()
@@ -123,7 +128,7 @@ def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
     df_all =  df_all.loc[mask, :].reset_index(drop=True)
 
     # Map text to ids
-    df_all['text_list'] = df_all['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size))
+    df_all['text_list'] = df_all['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size, emotions))
 
     # Binarise emotions
     emotion_dict = dict(zip(emotions, range(len(emotions))))
@@ -138,8 +143,8 @@ def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
 def preprocess_one_df(vocabulary, embedding, emotion, post_size):
     """Preprocess one dataframe for the image/text model.
     """
-    #vocab_size, embedding_dim = embedding.shape
-    #word_to_id = dict(zip(vocabulary, range(vocab_size)))
+    vocab_size, embedding_dim = embedding.shape
+    word_to_id = dict(zip(vocabulary, range(vocab_size)))
     # Unknown words = vector with zeros
     #embedding = np.concatenate([embedding, np.zeros((1, embedding_dim))])
 
@@ -150,8 +155,9 @@ def preprocess_one_df(vocabulary, embedding, emotion, post_size):
     mask = df_emotion['text'].map(lambda x: _is_valid_text(x, vocab_set))
     df_emotion =  df_emotion.loc[mask, :].reset_index(drop=True)
 
+    emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
     # Map text to ids
-    #df_all['text_list'] = df_all['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size))
+    df_emotion['text_list'] = df_emotion['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size, emotions))
 
     # Binarise emotions
     #emotion_dict = dict(zip(emotions, range(len(emotions))))

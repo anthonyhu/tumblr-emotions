@@ -69,7 +69,7 @@ def image_to_tfexample_with_text(image_data, image_format, height, width, text_d
       'image/class/label': int64_feature(class_id),
       'image/height': int64_feature(height),
       'image/width': int64_feature(width),
-      'text': bytes_feature(text_data),
+      'text': int64_feature(text_data),
   }))
 
 def download_and_uncompress_tarball(tarball_url, dataset_dir):
