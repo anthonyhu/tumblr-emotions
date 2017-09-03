@@ -206,8 +206,8 @@ In our model, we got rid of the last linear layer and replaced it with another l
 \section{Results}
 Are the images enough to accurately determine the emotion conveyed by the user? We tried several machine learning models on the raw images, that were resized to a fixed size $(224, 224, 3)$.
 \begin{itemize}
-    \item \textbf{Softmax regression}: with $\text{L}_2$ regularisation of $0.01$.
-    \item \textbf{Random Forest Classification}: with $1000$ trees and max depth of $5$.
+   %\item \textbf{Softmax regression}: with $\text{L}_2$ regularisation of $0.01$.
+    %\item \textbf{Random Forest Classification}: with $1000$ trees and max depth of $5$.
     \item \textbf{5 layers Convolutional Neural Network}: (each convolution is with stride 1, zero-padding to keep image size and followed by ReLU)
     \begin{itemize}[topsep=0pt]
         \itemsep-1em
@@ -249,8 +249,8 @@ And the results:
     & \textbf{Train} & \textbf{Test} \\
     & \textbf{accuracy} & \textbf{accuracy} \\ \hline
     \textbf{Random guessing} & 0.24 & 0.24 \\ \hline
-    \textbf{Softmax regression} & 0.41 & 0.34 \\ \hline
-    \textbf{Random forest}  & 0.60 & 0.44\\ \hline
+    %\textbf{Softmax regression} & 0.41 & 0.34 \\ \hline
+    %\textbf{Random forest}  & 0.60 & 0.44\\ \hline
     %\textbf{5 layers ConvNet}  &  &\\ \hline
     \textbf{Inception fine-tuned}  & 0.48 & 0.42 \\
     \hline
@@ -277,7 +277,7 @@ The results are quite satisfactory as even if some images are easy to read:
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{Images/happy_easy.jpg}
-    \caption{Easy happy images}
+    \caption{Easy to read happy images}
 \end{figure}
 
 Some other images are more challenging:
@@ -285,7 +285,7 @@ Some other images are more challenging:
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{Images/happy_hard.jpg}
-    \caption{Hard happy images}
+    \caption{Harder to read happy images}
 \end{figure}
 
 - visualise classified images with confidence, misclassified images
