@@ -222,7 +222,7 @@ Are the images enough to accurately determine the emotion conveyed by the user? 
     \item \textbf{Inception fine-tuned}: As described in 3.1.6, we retrained the final layer of the Inception model with:
     \begin{itemize}[topsep=0pt]
         \itemsep-1em
-        \item 20 epochs (1 epoch = 1 full sampling of the training data)
+        \item 9,000 steps
         \item Mini-batch size of 32
         \item Adam optimizer with learning rate $1\mathrm{e}{-6}$
     \end{itemize}
@@ -269,7 +269,7 @@ The training process of the Inception fine-tuning was monitored thanks to Tensor
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{Images/image_model_accuracies_cleaned.jpg}
-    \caption{Train/Validation accuracies of the Inception fine-tuned model}
+    \caption{Train/validation accuracies of the Inception fine-tuned model}
 \end{figure}
 
 The results are quite satisfactory as even if some images are easy to read:

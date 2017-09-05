@@ -220,7 +220,14 @@ The skip-gram model had the following parameters:
 \section{Results}
 Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space \cite{seth1} [Elaborate on mean embedding].
 
-The network architecture is straight-forward as the output softmax layer directly follows the mean embedding [illustration required]. This model achieves \textbf{55\%} accuracy on the test set. This is not bad at all, but note that the word order is completely lost! The order can be preserved using Recurrent Neural Networks, which is our next section.
+The network architecture is the following:
+\begin{itemize}
+    \item Each word is embedded into a vector of dimension 300.
+    \item The mean of those vectors is computed.
+    \item Fully connected layer of size 2048.
+    \item Output layer of size 6.
+\end{itemize}
+This model achieves \textbf{63\%} accuracy on the train set and \textbf{61\%} accuracy on the test set. Note that the word order is completely lost! The order can be preserved using Recurrent Neural Networks, which is our next section.
 
 
 
