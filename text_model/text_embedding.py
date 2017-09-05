@@ -86,6 +86,7 @@ def run_model(sess, model, X, y, is_training, model_gen=None):
     for e in range(nb_epochs):
         print ('Epoch: {0}'.format(e + 1))
         lr_decay = lr_decay ** max(e + 1 - max_epoch_no_decay, 0)
+        # would be better to use a placeholder to assign. Here we're modifying the graph.
         sess.run(tf.assign(model.learning_rate, initial_lr * lr_decay))
 
         total_loss = 0.0
