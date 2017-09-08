@@ -51,6 +51,9 @@ class CharModel():
         labels = tf.one_hot(self.target, nb_emotions)
         # Cross-entropy loss
         self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits))
+        # Add to tensorboard
+        tf.summary.scalar('Loss', self.loss)
+
         # Use gradient cliping
         trainable_vars = tf.trainable_variables()
         grads, _ = tf.clip_by_global_norm(tf.gradients(self.loss, trainable_vars), max_grad_norm)
@@ -60,6 +63,9 @@ class CharModel():
         #self.sample = tf.multinomial(tf.reshape(logits, [-1, vocab_size]), 1)
         correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), self.target)
         self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+        # Merge summaries
+        self.merged = tf.summary.merge_all()
 
 def _shuffling(X, y):
     p = np.random.permutation(X.shape[0])
@@ -78,10 +84,14 @@ def run_model(sess, model, X, y, is_training, model_gen=None):
         # Iteration to print at
         print_iter = list(np.linspace(0, nb_batches - 1, 11).astype(int))
         dropout_param = dropout
-        ops = [model.loss, model.accuracy, model.train_step]
+        ops = [model.merged, model.loss, model.accuracy, model.train_step]
     else:
         dropout_param = 1.0
-        ops = [model.loss, model.accuracy, tf.no_op()]
+        ops = [tf.no_op(), model.loss, model.accuracy, tf.no_op()]
+
+    # Tensorboard writer
+    if is_training:
+        train_writer = tf.summary.FileWriter('text_model/loss', sess.graph)
 
     for e in range(nb_epochs):
         print ('Epoch: {0}'.format(e + 1))
@@ -100,9 +110,12 @@ def run_model(sess, model, X, y, is_training, model_gen=None):
         for i in range(nb_batches):
             curr_input = X_reshaped[i, :, :]
             curr_target = y_reshaped[i, :]
-            curr_loss, curr_acc, _ = sess.run(ops, feed_dict={model.input_data: curr_input, 
+            summary, curr_loss, curr_acc, _ = sess.run(ops, feed_dict={model.input_data: curr_input, 
                                                               model.target: curr_target,
                                                               model.keep_prob: dropout_param})
+            if is_training:
+                train_writer.add_summary(summary, i + e * nb_batches)
+
             total_loss += curr_loss
             total_accuracy += curr_acc
             nb_iter += 1
@@ -256,7 +269,7 @@ def main_text():
         init_scale = config['init_scale']
         initializer = tf.random_uniform_initializer(-init_scale, init_scale)    
         with tf.variable_scope('Model', reuse=None, initializer=initializer):
-            config['nb_epochs'] = 10
+            config['nb_epochs'] = 5
             m_train = CharModel(config)
         sess.run(tf.global_variables_initializer())
         sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: embedding})
