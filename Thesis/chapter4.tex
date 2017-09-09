@@ -16,7 +16,7 @@ Neural networks only accept numbers as inputs, therefore the text has to be conv
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Word Embedding}
-One way to transform text into numbers would be to use a dictionary that maps each word in a vocabulary (containing all the words of every Tumblr posts) to an integer. Then, we could transform any word into an one-hot vector -- a vector of of the same size as the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance)
+One way to transform text into numbers would be to use a dictionary that maps each word in a given vocabulary (containing all the words of every Tumblr posts) to an unique integer. Then, we could transform any word into an one-hot vector -- a vector of of the same size as the vocabulary, with a 1 in the position of the word and 0s elsewhere. A sentence could then be encoded as a sum of vectors, that can be normalised by some distance ($L^2$ for instance)
 
 A major drawback of that representation is data sparsity as the vocabulary size can be huge. For example, the number of 5-word sentences with a vocabulary size of 1000, is $1000^5=10^{15}$. This sparsity problem is specific to text as in contrary, image and audio processing systems train on rich high-dimensional data (pixel intensities for images and spectral densities for audio), as shown by Figure \ref{comparison-text}.
 
@@ -27,12 +27,12 @@ A major drawback of that representation is data sparsity as the vocabulary size 
     \label{comparison-text}
 \end{figure}
 
-Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close to `tree' as it is to `cat'. Ideally, you would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how \textbf{word embedding} works: every word is projected into a highly dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
+Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how \textbf{word embedding} works: every word is projected into a highly dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
 
 \subsection{Word2Vec Overview}
 The Word2Vec model by Mikolov et al. \cite{word2vec} is an efficient implementation of word embedding that learned the high-dimensional representation of words with a {\em fake task}. The idea is to train a neural network with a single hidden layer on a task, but we call the task {\em fake} as the network will never be used: we're only after the weights of the hidden layer that will actually be the word representation. 
 
-Now to explain the fake task, suppose you have a sentence: ``the ants in the garden". We can break that sentence in (context, target) pairs where the contexts are the words surrounding the target word. For example, if we take a context with a window of size 1, we get the following pairs: ([the, in], ants), ([ants, the], in), ([in, garden], the). We will then train a model to predict the target word given the context, and the weights of the model will give the word embedding. This model is called the Continuous Bag-of-Words model, and Word2Vec also comes in another flavor called the Skip-Gram model.
+Now to explain the fake task, suppose we have a sentence: ``the ants in the garden". We can break that sentence in (context, target) pairs where the contexts are the words surrounding the target word. For example, if we take a context with a window of size 1, we get the following pairs: ([the, in], ants), ([ants, the], in), ([in, garden], the). We will then train a model to predict the target word given the context, and the weights of the model will give the word embedding. This model is called the Continuous Bag-of-Words model, and Word2Vec also comes in another flavor called the Skip-Gram model.
 
 In the Skip-Gram model, we will predict the context given the target word, creating more pairs as for instance ([the, in], ants) are split into two training instances: (ants, the) and (ants, in). The Continuous Bag-of-Words model smooth over the distributional information by using the whole context, and works well on smaller datasets, but by breaking (context, target) pairs into more observations, the Skip-Gram model tends to perform better on larger datasets, and that's the model we will stick on from now on.
 
@@ -70,7 +70,7 @@ In this model, two words that have similar contexts should output similar probab
 Which words have similar contexts? Synonyms are a good example: `brave' and `fearless' are two words that must appear in similar contexts. The same applies for words that are related such as `physics' and `thermodynamics' or words with the same stem, e.g. `apples' and 'apple'. 
 
 \newpage
-\section{Training Word2Vec}
+\section{Word2Vec}
 Training the network described above involves, with a vocabulary size of 10,000: 10,000$\times300$=3,000,000 parameters for the hidden layer and $300\times$10,000=3,000,000 for the output layer. And in fact, the actual Word2Vec model contain 3M words: the number of parameters is thus 2$\times$3,000,000$\times$300=1,800,000,000. That's a huge neural network that will need a really large training set to train those parameters, which is not feasible as is. Word2Vec uses a few tricks to obtain word representation of high quality at a reduced computational cost:
 
 \begin{enumerate}
@@ -205,7 +205,7 @@ Figure \ref{subsampling} shows how the probability to keep a word decreases with
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/subsampling_prob.eps}
-    \caption{Subsampling probability graph}
+    \caption{Subsampling probability}
     \label{subsampling}
 \end{figure}
 

@@ -1,6 +1,6 @@
 \chapter{Deep Sentiment}
 
-Real-world information oftentimes come in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect \cite{mcgurk}. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if you know the actual sound is a /{\em ba}/, you cannot stop your brain from interpreting it as a /{\em da}/.
+Real-world information oftentimes come in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect \cite{mcgurk}. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if we know the actual sound is a /{\em ba}/, we cannot stop our brain from interpreting it as a /{\em da}/.
 
 Likewise, an image almost always come with a text as different interpretation can arise when a textual context is not provided, as shown in Figure \ref{ambiguous}:
 
@@ -24,7 +24,7 @@ Exploiting both visual and textual information is therefore key to understand th
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%  NEW SECTION   %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Architecture}
+\section{Model Architecture}
 
 Deep Sentiment builds on the models we have seen before as shown in Figure \ref{deep-sentiment}:
 
@@ -39,8 +39,8 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
     \item The image go through the pre-trained Inception model that will extract features from the images: more precisely with 128 neurons in the last Inception 
     layer.
     \item The text is embedded in a high-dimensional space with Word2Vec and will be fed to an LSTM with a 2048 neurons output layer.
-    \item The two outputs are concatenated to form the `Fully connected layer' in the graph with 128 + 2048 = 2176 neurons. 
-    \item The final layer contains 6 neurons one for each basic emotion.
+    \item The two outputs are concatenated (size 128 + 2048 = 2176 ) and fed to a fully connected layer with 1024 neurons. 
+    \item The final layer contains 6 neurons, one for each basic emotion.
     \item Softmax is applied to the final layer to give the probability distribution of the emotional state of the user.
 \end{enumerate}
 
@@ -48,9 +48,9 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
 Deep Sentiment was trained with:
 \begin{itemize}[topsep=0pt]
     \itemsep-1em
-    \item 10,000 steps
+    \item 10,000 training steps
     \item Mini-batch size of 32
-    \item Adam optimizer with initial learning rate of $1\mathrm{e}{-3}$
+    \item Adam optimizer with an initial learning rate of $1\mathrm{e}{-3}$
     \item Learning rate decay of $\frac{1}{2}$ every 1000 steps
 \end{itemize}
 
@@ -82,7 +82,7 @@ This model combining text and image vastly outperforms the algorithms only using
     \hline
     \end{tabular}
 \end{center} 
-\caption{Models results}
+\caption{Comparison of results}
 \label{all-results}
 \end{table}
 
@@ -138,7 +138,7 @@ Maximising over the emotion `happy' yielded:
 Happy posts usually contained pictures of people and in the image gradient we can spot atleast two faces, but that might be because humans are especially good at spotting faces, even when there are none.
 
 \newpage
-\section{Generate text posts}
+\section{Generation of text}
 
 We can tweak Deep Sentiment to instead make the neural network generate text by feeding an image. The network will be trained to predict the next word of the text as shown in Figure \ref{deep-prediction}:
 
@@ -169,7 +169,7 @@ Here is an example of a generated post using this image (which was not in the tr
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.3\textwidth]{Images/puppy.jpg}
-    \caption{Image used to generate post}
+    \caption{Image used to generate text}
 \end{figure}
 
 \begin{quote}
