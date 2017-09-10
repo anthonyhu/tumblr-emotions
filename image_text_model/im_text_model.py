@@ -88,6 +88,8 @@ def train_deep_sentiment(dataset_dir, checkpoints_dir, train_dir, num_steps, ini
         # Concatenate image and text features
         concat_features = tf.concat([images_features, texts_features], axis=1)
 
+        # Fully connected layer
+
         W_softmax = tf.get_variable('W_softmax', [im_features_size + fc1_size, nb_emotions])
         b_softmax = tf.get_variable('b_softmax', [nb_emotions])
         logits = tf.matmul(concat_features, W_softmax) + b_softmax
