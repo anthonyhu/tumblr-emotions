@@ -102,9 +102,11 @@ def download_im_with_text(search_query, start, end, dataset_dir='data', subdir='
     emb_dir = 'embedding_weights'
     filename = 'glove.6B.50d.txt'
     if emb_name == 'word2vec':
-        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
+        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, 
+            filename)
     else:
-        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
+        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, 
+            filename)
 
     df = preprocess_one_df(vocabulary, embedding, search_query, _POST_SIZE)
     links = df['photo']
@@ -164,9 +166,11 @@ def convert_images_with_text(dataset_dir, num_valid, photos_subdir='photos',
     emb_dir = 'embedding_weights'
     filename = 'glove.6B.50d.txt'
     if emb_name == 'word2vec':
-        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
+        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, 
+            filename)
     else:
-        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
+        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, 
+            filename)
 
     for emotion in emotions:
         df_dict[emotion] = preprocess_one_df(vocabulary, embedding, emotion, _POST_SIZE)
@@ -324,7 +328,8 @@ def _load_batch(dataset, batch_size=32, shuffle=True, height=299, width=299,
           been preprocessed.
       images_raw: A Tensor of size [batch_size, height, width, 3], image samples that 
                            can be used for visualization.
-      labels: A Tensor of size [batch_size], whose values range between 0 and dataset.num_classes.
+      labels: A Tensor of size [batch_size], whose values range between 0 and 
+          dataset.num_classes.
     """
     # For validation, if you set the common_queue_capacity to something lower than
     # batch_size, which is the validation size, then your output will contain duplicates.
@@ -368,7 +373,8 @@ def load_batch_with_text(dataset, batch_size=32, shuffle=True, height=299, width
           preprocessed.
       images_raw: A Tensor of size [batch_size, height, width, 3], image samples that can 
           be used for visualization.
-      labels: A Tensor of size [batch_size], whose values range between 0 and dataset.num_classes.
+      labels: A Tensor of size [batch_size], whose values range between 0 and 
+          dataset.num_classes.
     """
     # For validation, if you set the common_queue_capacity to something lower than
     # batch_size, which is the validation size, then your output will contain duplicates.
@@ -443,7 +449,8 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
             batch_size=dataset_valid.num_samples, 
             shuffle=False, height=image_size, width=image_size)
         
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
             logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, 
                 is_training=True)
@@ -464,7 +471,7 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
 
         # Accuracy metrics
         accuracy_valid = slim.metrics.accuracy(tf.cast(labels_valid, tf.int32),
-                                               tf.cast(tf.argmax(logits_valid, 1), tf.int32))
+            tf.cast(tf.argmax(logits_valid, 1), tf.int32))
 
         def train_step_fn(session, *args, **kwargs):
             total_loss, should_stop = train_step(session, *args, **kwargs)
@@ -507,7 +514,8 @@ def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps
         image_size = inception_v1.default_image_size
         images, _, labels = _load_batch(dataset, height=image_size, width=image_size)
         
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
             logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, 
                 is_training=True)
@@ -564,8 +572,8 @@ def evaluate_model(checkpoint_dir, log_dir, num_evals):
         image_size = inception_v1.default_image_size
 
         dataset_train = get_split_with_text('train', dataset_dir)
-        images_train, _, labels_train = _load_batch(dataset_train, batch_size=32, shuffle=False, 
-                                                    height=image_size, width=image_size)
+        images_train, _, labels_train = _load_batch(dataset_train, batch_size=32, 
+            shuffle=False, height=image_size, width=image_size)
 
         # Create the model, use the default arg scope to configure the batch norm parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
@@ -578,10 +586,11 @@ def evaluate_model(checkpoint_dir, log_dir, num_evals):
 
         # Load validation data
         dataset_valid = get_split_with_text('validation', dataset_dir)
-        images_valid, _, labels_valid = _load_batch(dataset_valid, batch_size=32, shuffle=False, 
-            height=image_size, width=image_size)
+        images_valid, _, labels_valid = _load_batch(dataset_valid, batch_size=32, 
+            shuffle=False, height=image_size, width=image_size)
 
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
             logits_valid, _ = inception_v1.inception_v1(images_valid, 
                 num_classes=dataset_valid.num_classes, 
@@ -629,13 +638,14 @@ def evaluate_model_2(checkpoint_dir, log_dir, mode, num_evals):
         images, _, labels = _load_batch(dataset, batch_size=32, shuffle=False, 
                                         height=image_size, width=image_size)
 
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
             logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, 
                                                   is_training=False, reuse=True)
         # Accuracy metrics
         accuracy = slim.metrics.streaming_accuracy(tf.cast(labels, tf.int32),
-                                                   tf.cast(tf.argmax(logits, 1), tf.int32))
+            tf.cast(tf.argmax(logits, 1), tf.int32))
 
         # Choose the metrics to compute:
         names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
@@ -750,7 +760,8 @@ def _load_embedding_weights_word2vec(text_dir, emb_dir, filename):
         embedding: A numpy array of the weights.
     """
     word2vec_dir = os.path.join(text_dir, emb_dir, filename)
-    model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_dir, binary=True)
+    model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_dir, 
+        binary=True)
     vocabulary = model.index2word
     embedding = model.syn0
     print('Finished loading word embedding weights.')
@@ -791,7 +802,8 @@ def _paragraph_to_ids(paragraph, word_to_id, post_size, emotions):
     vocab_size = len(word_to_id)
 
     # Remove emotion hashtags from the post.
-    emotion_regex = re.compile('|'.join(map(re.escape, ['#' + emotion for emotion in emotions])))
+    emotion_regex = re.compile('|'.join(map(re.escape, 
+        ['#' + emotion for emotion in emotions])))
     paragraph = emotion_regex.sub('', paragraph.lower())
 
     regex = re.compile('[%s]' % re.escape(_PUNCTUATION))
@@ -810,9 +822,11 @@ def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
     """Preprocess emotion dataframes.
     """
     if emb_name == 'word2vec':
-        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, filename)
+        vocabulary, embedding = _load_embedding_weights_word2vec(text_dir, emb_dir, 
+            filename)
     else:
-        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
+        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, 
+            filename)
     vocab_size, embedding_dim = embedding.shape
     word_to_id = dict(zip(vocabulary, range(vocab_size)))
     # Unknown words = vector with zeros
@@ -861,8 +875,8 @@ def preprocess_one_df(vocabulary, embedding, emotion, post_size):
 
     emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
     # Map text to ids
-    df_emotion['text_list'] = df_emotion['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, 
-        post_size, emotions))
+    df_emotion['text_list'] = df_emotion['text'].map(lambda x: _paragraph_to_ids(x, 
+        word_to_id, post_size, emotions))
 
     # Binarise emotions
     #emotion_dict = dict(zip(emotions, range(len(emotions))))
@@ -1089,7 +1103,8 @@ def compute_sklearn_features():
             config['nb_epochs'] = 1
             m_train = CharModel(config)
         sess.run(tf.global_variables_initializer())
-        sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: embedding})
+        sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: 
+            embedding})
 
         batch_size = m_train.config['batch_size']
         initial_lr = m_train.config['initial_lr']
@@ -1158,7 +1173,8 @@ def main_text():
             config['nb_epochs'] = 5
             m_train = CharModel(config)
         sess.run(tf.global_variables_initializer())
-        sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: embedding})
+        sess.run(m_train.embedding_init, feed_dict={m_train.embedding_placeholder: 
+            embedding})
         # Characters generation
         #with tf.variable_scope('Model', reuse=True):
             #config_gen = dict(config)
@@ -1232,10 +1248,11 @@ def train_deep_sentiment(dataset_dir, checkpoints_dir, train_dir, num_steps, ini
              width=image_size)
         
         im_features_size = 128
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            images_features, _ = inception_v1.inception_v1(images, num_classes=im_features_size, 
-                 is_training=True)
+            images_features, _ = inception_v1.inception_v1(images, 
+                num_classes=im_features_size, is_training=True)
 
         # Text model
         text_dir = 'text_model'
@@ -1261,9 +1278,11 @@ def train_deep_sentiment(dataset_dir, checkpoints_dir, train_dir, num_steps, ini
             #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
 
             # Rescale the mean by the actual number of non-zero values.
-            nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed, 0.0), tf.float32), axis=1)
+            nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed, 0.0), tf.float32), 
+                axis=1)
             # If a post has zero finite elements, replace nb_finite by 1
-            nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), nb_finite)
+            nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), 
+                nb_finite)
             h1 = tf.reduce_mean(input_embed, axis=1) * _POST_SIZE / nb_finite
 
             fc1_size = 2048
@@ -1300,7 +1319,8 @@ def train_deep_sentiment(dataset_dir, checkpoints_dir, train_dir, num_steps, ini
             # Decaying learning rate every epoch
             if train_step_fn.step % (nb_batches) == 0:
                 lr_decay = 0.5 ** train_step_fn.epoch
-                session.run(lr_rate_assign, feed_dict={lr_rate_placeholder: initial_lr * lr_decay})
+                session.run(lr_rate_assign, feed_dict={
+                    lr_rate_placeholder: initial_lr * lr_decay})
                 print('New learning rate: {0}'. format(initial_lr * lr_decay))
                 train_step_fn.epoch += 1
 
@@ -1348,7 +1368,8 @@ def evaluate_deep_sentiment(checkpoint_dir, log_dir, mode, num_evals):
             width=image_size)
         
         im_features_size = 128
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
             images_features, _ = inception_v1.inception_v1(images, 
                 num_classes=im_features_size, 
@@ -1378,9 +1399,11 @@ def evaluate_deep_sentiment(checkpoint_dir, log_dir, mode, num_evals):
             #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
 
             # Rescale the mean by the actual number of non-zero values.
-            nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed, 0.0), tf.float32), axis=1)
+            nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed, 0.0), tf.float32), 
+                axis=1)
             # If a post has zero finite elements, replace nb_finite by 1
-            nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), nb_finite)
+            nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), 
+                nb_finite)
             h1 = tf.reduce_mean(input_embed, axis=1) * _POST_SIZE / nb_finite
 
             fc1_size = 2048
@@ -1456,7 +1479,8 @@ def class_visualisation(label, learning_rate, checkpoint_dir):
         text = tf.constant(np.ones((1, _POST_SIZE), dtype=np.int32) * vocab_size)
 
         im_features_size = 128
-        # Create the model, use the default arg scope to configure the batch norm parameters.
+        # Create the model, use the default arg scope to configure the batch norm 
+            parameters.
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
             images_features, _ = inception_v1.inception_v1(image, 
                 num_classes=im_features_size, is_training=True)
@@ -1478,9 +1502,11 @@ def class_visualisation(label, learning_rate, checkpoint_dir):
             #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
 
             # Rescale the mean by the actual number of non-zero values.
-            nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed, 0.0), tf.float32), axis=1)
+            nb_finite = tf.reduce_sum(tf.cast(tf.not_equal(input_embed, 0.0), tf.float32), 
+                axis=1)
             # If a post has zero finite elements, replace nb_finite by 1
-            nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), nb_finite)
+            nb_finite = tf.where(tf.equal(nb_finite, 0.0), tf.ones_like(nb_finite), 
+                nb_finite)
             h1 = tf.reduce_mean(input_embed, axis=1) * _POST_SIZE / nb_finite
 
             fc1_size = 2048

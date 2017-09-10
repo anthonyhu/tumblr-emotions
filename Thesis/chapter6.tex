@@ -1,8 +1,8 @@
 \chapter{Deep Sentiment}
 
-Real-world information oftentimes come in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect \cite{mcgurk}. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if we know the actual sound is a /{\em ba}/, we cannot stop our brain from interpreting it as a /{\em da}/.
+Real-world information oftentimes comes in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect \cite{mcgurk}. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if we know the actual sound is a /{\em ba}/, we cannot stop our brain from interpreting it as a /{\em da}/.
 
-Likewise, an image almost always come with a text as different interpretation can arise when a textual context is not provided, as shown in Figure \ref{ambiguous}:
+Likewise, an image almost always comes with a caption as different interpretations can arise when textual context is not provided, as shown in Figure \ref{ambiguous}:
 
 \begin{figure}[H]
     \begin{subfigure}{.5\textwidth}
@@ -36,9 +36,9 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
 \end{figure}
 
 \begin{enumerate}
-    \item The image go through the pre-trained Inception model that will extract features from the images: more precisely with 128 neurons in the last Inception 
+    \item The image go through the pre-trained Inception model that extracts features from the images: more precisely with 128 neurons in the last Inception 
     layer.
-    \item The text is embedded in a high-dimensional space with Word2Vec and will be fed to an LSTM with a 2048 neurons output layer.
+    \item The text is embedded in a high-dimensional space with Word2Vec and is fed to an LSTM with 2048 neurons.
     \item The two outputs are concatenated (size 128 + 2048 = 2176 ) and fed to a fully connected layer with 1024 neurons. 
     \item The final layer contains 6 neurons, one for each basic emotion.
     \item Softmax is applied to the final layer to give the probability distribution of the emotional state of the user.
@@ -50,7 +50,7 @@ Deep Sentiment was trained with:
     \itemsep-1em
     \item 10,000 training steps
     \item Mini-batch size of 32
-    \item Adam optimizer with an initial learning rate of $1\mathrm{e}{-3}$
+    \item Adam optimizer with an initial learning rate of 0.001
     \item Learning rate decay of $\frac{1}{2}$ every 1000 steps
 \end{itemize}
 
@@ -87,7 +87,7 @@ This model combining text and image vastly outperforms the algorithms only using
 \end{table}
 
 \newpage
-\section{Emotion visualisation}
+\section{Emotion Visualisation}
 We can generate an image that maximises the score of a certain emotion by performing gradient ascent on a randomly initialised image \cite{class-vis}.
 
 More concretely, let $I$ be an image and $y$ be a target emotion. Let us denote by $s_y(I)$ the score of class $y$ for the image $I$, that is one of the six neurons right before the softmax layer. We want to generate an image with a high score for emotion $y$ by solving the problem:
@@ -101,15 +101,15 @@ Note that we're maximising the unnormalised class scores $s_y(I)$ and not the pr
 
 \subsection{Regularisation}
 
-The explicit regulariser is the $L_2$ decay: $R(I) = \lambda \Vert I \Vert_2^2$ that prevents extreme pixel values from dominating the generated image. Those pixel values do not occur naturally in real images and are not useful for visualisation.
+The explicit regulariser is $L_2$ decay: $R(I) = \lambda \Vert I \Vert_2^2$ that prevents extreme pixel values from dominating the generated image. Those pixel values do not occur naturally in real images and are not useful for visualisation.
 
 The implicit regularisations are: \cite{class-vis2}
 \begin{enumerate}
     \item \textbf{Gaussian blur:} Gradient ascent tends to produce image with high frequency information. What are frequencies in images? To put it simply, each image 
     is made of various frequencies: start with the average colour (low frequency) and slowly add higher frequencies wavelengths to build the details of the image.
     
-    An image with high frequency information causes high activations but are not realistic nor interpretable as shown by Nguyen et al. \cite{nguyen}. High frequency 
-    information are penalised using a Gaussian blur step on image $I: \text{GaussianBlur}(I, \theta_{\text{blur}})$ with $\theta_{\text{blur}}$ the standard deviation of the 
+    An image with high frequency information causes high activations but are not realistic nor interpretable as shown by A. Nguyen et al. \cite{nguyen}. High frequency 
+    information are penalised using a Gaussian blur step on image $I$: $\text{GaussianBlur}(I, \theta_{\text{blur}})$ with $\theta_{\text{blur}}$ the standard deviation of the 
     Gaussian kernel used in the blur step. Blurring an image is computationally expensive and as such, we're only blurring every $\theta_{\text{blur-every}}$ steps.
     \item \textbf{Pixel clipping:} After performing $L_2$ decay and Gaussian blur, that suppress high amplitude and high frequency information, we're left with images 
     with pixel values that are small and smooth. However, each pixel will still be non-zero and contribute a little bit to the gradient. We want to discard the contribution of 
@@ -117,14 +117,15 @@ The implicit regularisations are: \cite{class-vis2}
     $\theta_{\text{small-norm}}$ for the norm is set to be a percentile of all pixel norms in the image.
 \end{enumerate}
 
-\subsection{Generated images}
+\subsection{Generated Images}
 
 We performed gradient ascent on a randomly initialised image using the following parameters:
-\begin{itemize}
-    \item $L_2$ regularisation parameter: $\lambda = 0.001$.
-    \item In Gaussian blur, $\theta_{\text{blur}} = 0.5$ and $\theta_{\text{blur-every}} = 10$.
-    \item In pixel clipping, $\theta_{\text{small-norm}}$ is the norm of the $10^{\text{th}}$ percentile.
-    \item 500 gradient updates.
+\begin{itemize}[topsep=0pt]
+    \itemsep-1em
+    \item 500 gradient updates
+    \item $L_2$ regularisation parameter: $\lambda = 0.001$
+    \item In Gaussian blur, $\theta_{\text{blur}} = 0.5$ and $\theta_{\text{blur-every}} = 10$
+    \item In pixel clipping, $\theta_{\text{small-norm}}$ is the norm of the $10^{\text{th}}$ percentile
 \end{itemize}
 
 Maximising over the emotion `happy' yielded:
@@ -138,9 +139,9 @@ Maximising over the emotion `happy' yielded:
 Happy posts usually contained pictures of people and in the image gradient we can spot atleast two faces, but that might be because humans are especially good at spotting faces, even when there are none.
 
 \newpage
-\section{Generation of text}
+\section{Generation of Text}
 
-We can tweak Deep Sentiment to instead make the neural network generate text by feeding an image. The network will be trained to predict the next word of the text as shown in Figure \ref{deep-prediction}:
+We can tweak Deep Sentiment to instead make the neural network generate text from an image. The network will be trained to predict the next word of the post as shown in Figure \ref{deep-prediction}:
 
 \begin{figure}[H]
     \centering
@@ -149,9 +150,7 @@ We can tweak Deep Sentiment to instead make the neural network generate text by 
     \label{deep-prediction}
 \end{figure}
 
-Need to add word embedding in graph
-
-The input words are embedded with Word2Vec and then fed to a one layer LSTM with 512 neurons. The initial hidden state $h_0$ of the LSTM is the output of the Inception network. If we denote by $C$ the number of emotions, the loss $J_{GEN}$ is the sum of the cross-entropy loss of the different predictions $\hat{y}_1, \hat{y}_2, ..., \hat{y}_T \in [0,1]^C$ of the true labels $y_1, y_2, ..., y_T \in \{0, 1\}^C$ (one-hot encoding):
+The input words are embedded with Word2Vec and then fed to a one layer LSTM with 512 neurons. The initial hidden state $h_0$ of the LSTM is the output of the Inception network. If we denote by $C$ the number of emotions and $(T+1)$ the number of words in the post, the loss $J_{GEN}$ is the sum of the cross-entropy loss of the different predictions $\hat{y}_1, \hat{y}_2, ..., \hat{y}_T \in [0,1]^C$ and the true labels $y_1, y_2, ..., y_T \in \{0, 1\}^C$ (one-hot encoding):
 \begin{equation}
     J_{GEN} = \sum_{t=1}^T \text{cross\,entropy}(y_t, \hat{y}_t)
 \end{equation}
@@ -163,7 +162,7 @@ with the cross-entropy loss given by: $\text{cross\,entropy}(y_t, \hat{y}_t) = -
 
 The network was trained using only `happy' posts. In order to make batches, each post had a fixed length of 50 words (shorter posts were filled with a special token).
 
-For generation, the network was fed with an image and a random first word in the dictionary. The output would then be a probability distribution of the next word that we would sample from and feed again to the network.
+For generation, the network was given an input image and a random first word in the dictionary. The output would then be a probability distribution of the next word that we would sample from and feed again to the network.
 
 Here is an example of a generated post using this image (which was not in the training set:
 \begin{figure}[H]
