@@ -4,21 +4,21 @@
 # Email you if job starts, completed or failed
 #SBATCH --mail-user=ahu@stats.ox.ac.uk
 #SBATCH --mail-type=ALL
-#SBATCH --job-name=evaluate
+#SBATCH --job-name=train
 #Choose your partition depending on your requirements
-#SBATCH --partition=medium
+#SBATCH --partition=large
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
 # CPUs required for each job
 #SBATCH --cpus-per-task=1
 #SBATCH --time=12:00:00
 # Memory per CPU in megabytes
-#SBATCH --mem-per-cpu=64000
-#SBATCH --array=0-1%2
+#SBATCH --mem-per-cpu=128000
+#SBATCH --array=0-0%1
 #SBATCH --output=/data/localhost/not-backed-up/ahu/jobname_%A_%a.txt
 
 # Now run your script.
-python job_evaluate.py
+python job_train.py
 
 # Print environment variables:
 echo "SLURM_JOBID: " $SLURM_JOBID
