@@ -96,12 +96,13 @@ def _paragraph_to_ids(paragraph, word_to_id, post_size, emotions):
     words = regex.sub('', paragraph).lower().split()
     # Replace unknown words by an id equal to the size of the vocab
     words = map(lambda x: word_to_id.get(x, vocab_size), words)
-        
-    if len(words) > post_size:
+    words_len = len(words)
+    if words_len > post_size:
         words = words[:post_size]
+        words_len = post_size
     else:
-        words = words + [vocab_size] * (post_size - len(words))
-    return words
+        words = words + [vocab_size] * (post_size - words_len)
+    return words, words_len
 
 def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
     """Preprocess emotion dataframes.
@@ -128,7 +129,8 @@ def preprocess_df(text_dir, emb_dir, filename, emb_name, emotions, post_size):
     df_all =  df_all.loc[mask, :].reset_index(drop=True)
 
     # Map text to ids
-    df_all['text_list'] = df_all['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size, emotions))
+    df_all['text_list'], df_all['text_len'] = zip(*df_all['text'].map(lambda x: 
+        _paragraph_to_ids(x, word_to_id, post_size, emotions)))
 
     # Binarise emotions
     emotion_dict = dict(zip(emotions, range(len(emotions))))
