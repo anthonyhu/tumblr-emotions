@@ -1,6 +1,12 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Citations, figures, tables, references}{}% 2
-\BOOKMARK [2][-]{subsection.2.1}{Citations within the text}{section.2}% 3
-\BOOKMARK [2][-]{subsection.2.2}{Footnotes}{section.2}% 4
-\BOOKMARK [2][-]{subsection.2.3}{Figures}{section.2}% 5
-\BOOKMARK [2][-]{subsection.2.4}{Tables}{section.2}% 6
+\BOOKMARK [1][-]{section.2}{Tumblr data}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{The dataset}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Data preprocessing}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Visual Recognition}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Transfer Learning}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{Results}{section.3}% 7
+\BOOKMARK [1][-]{section.4}{Citations, figures, tables, references}{}% 8
+\BOOKMARK [2][-]{subsection.4.1}{Citations within the text}{section.4}% 9
+\BOOKMARK [2][-]{subsection.4.2}{Footnotes}{section.4}% 10
+\BOOKMARK [2][-]{subsection.4.3}{Figures}{section.4}% 11
+\BOOKMARK [2][-]{subsection.4.4}{Tables}{section.4}% 12
