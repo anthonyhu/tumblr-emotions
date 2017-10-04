@@ -1,7 +1,7 @@
 # Import necessary packages
 import os
 #from image_model.im_model import evaluate_model_2
-from image_text_model.im_text_model import evaluate_deep_sentiment
+from image_text_model.im_text_rnn_model import evaluate_deep_sentiment
 
 # Obtain the environment variables to determine the parameters
 slurm_id = int(os.environ['SLURM_ARRAY_JOB_ID'])
@@ -11,7 +11,7 @@ slurm_parameter = int(os.environ['SLURM_ARRAY_TASK_ID'])
 #log_dir = 'image_model/model_eval'
 checkpoint_dir = 'image_text_model/deep_sentiment_model'
 log_dir = 'image_text_model/model_eval'
-num_evals = 10
+num_evals = 5
 if slurm_parameter == 0:
 	mode = 'train'
 else:

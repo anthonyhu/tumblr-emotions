@@ -159,7 +159,8 @@ def preprocess_one_df(vocabulary, embedding, emotion, post_size):
 
     emotions = ['happy', 'sad', 'angry', 'scared', 'disgusted', 'surprised']
     # Map text to ids
-    df_emotion['text_list'] = df_emotion['text'].map(lambda x: _paragraph_to_ids(x, word_to_id, post_size, emotions))
+    df_emotion['text_list'], df_emotion['text_len'] = zip(*df_emotion['text'].map(lambda x: 
+        _paragraph_to_ids(x, word_to_id, post_size, emotions)))
 
     # Binarise emotions
     #emotion_dict = dict(zip(emotions, range(len(emotions))))

@@ -48,7 +48,7 @@ _RANDOM_SEED = 0
 _NUM_SHARDS = 5
 
 # Number of words in a post
-_POST_SIZE = 200
+_POST_SIZE = 20
 
 # Filename containing the train/valid split size
 _TRAIN_VALID_FILENAME = 'train_valid_split.txt'
@@ -159,7 +159,7 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir,
   sys.stdout.flush()
 
 def _convert_dataset_with_text(split_name, filenames, class_names_to_ids, dataset_dir, df_dict, 
-                     tfrecords_subdir='tfrecords'):
+                               tfrecords_subdir='tfrecords'):
   """Converts the given filenames to a TFRecords dataset.
 
   Args:
@@ -201,11 +201,12 @@ def _convert_dataset_with_text(split_name, filenames, class_names_to_ids, datase
             base = os.path.basename(filenames[i])
             index = (int)(os.path.splitext(base)[0])
             text_data = df_dict[class_name].iloc[index]['text_list']
+            seq_len = df_dict[class_name].iloc[index]['text_len']
             # Convert to str, as only strings are accepted by tfexample
             #text_data = text_data.encode('ascii', 'ignore')
 
             example = dataset_utils.image_to_tfexample_with_text(
-                image_data, b'jpg', height, width, text_data, class_id)
+                image_data, b'jpg', height, width, text_data, seq_len, class_id)
             tfrecord_writer.write(example.SerializeToString())
 
   sys.stdout.write('\n')

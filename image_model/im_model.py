@@ -94,7 +94,7 @@ def load_batch_with_text(dataset, batch_size=32, shuffle=True, height=299, width
     data_provider = slim.dataset_data_provider.DatasetDataProvider(
         dataset, shuffle=shuffle, common_queue_capacity=batch_size,
         common_queue_min=8)
-    image_raw, text, label = data_provider.get(['image', 'text', 'label'])
+    image_raw, text, seq_len, label = data_provider.get(['image', 'text', 'seq_len', 'label'])
     
     # Preprocess image for usage by Inception.
     image = inception_preprocessing.preprocess_image(image_raw, height, width, is_training=is_training)
@@ -105,13 +105,13 @@ def load_batch_with_text(dataset, batch_size=32, shuffle=True, height=299, width
     image_raw = tf.squeeze(image_raw)
 
     # Batch it up.
-    images, images_raw, texts, labels = tf.train.batch(
-        [image, image_raw, text, label],
+    images, images_raw, texts, seq_lens, labels = tf.train.batch(
+        [image, image_raw, text, seq_len, label],
         batch_size=batch_size,
         num_threads=1,
         capacity=2 * batch_size)
     
-    return images, images_raw, texts, labels
+    return images, images_raw, texts, seq_lens, labels
 
 def get_init_fn(checkpoints_dir, model_name='inception_v1.ckpt'):
     """Returns a function run by the chief worker to warm-start the training.

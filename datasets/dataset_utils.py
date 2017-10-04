@@ -62,7 +62,7 @@ def image_to_tfexample(image_data, image_format, height, width, class_id):
       'image/width': int64_feature(width),
   }))
 
-def image_to_tfexample_with_text(image_data, image_format, height, width, text_data, class_id):
+def image_to_tfexample_with_text(image_data, image_format, height, width, text_data, seq_len, class_id):
   return tf.train.Example(features=tf.train.Features(feature={
       'image/encoded': bytes_feature(image_data),
       'image/format': bytes_feature(image_format),
@@ -70,6 +70,7 @@ def image_to_tfexample_with_text(image_data, image_format, height, width, text_d
       'image/height': int64_feature(height),
       'image/width': int64_feature(width),
       'text': int64_feature(text_data),
+      'seq_len': int64_feature(seq_len),
   }))
 
 def download_and_uncompress_tarball(tarball_url, dataset_dir):
