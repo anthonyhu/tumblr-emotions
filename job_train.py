@@ -18,7 +18,7 @@ if not tf.gfile.Exists(checkpoints_dir):
 
 # Fine-tune model
 train_dir = 'image_text_model/deep_sentiment_model'
-num_steps = 10000
+num_steps = 20000
 train_deep_sentiment(checkpoints_dir, train_dir, num_steps)
 
 # Save output and parameters to text file in the localhost node, which is where the computation is performed.

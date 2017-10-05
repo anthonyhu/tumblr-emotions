@@ -25,10 +25,10 @@ _CONFIG = {'mode': 'train',
            'emb_dir': 'embedding_weights',
            'filename': 'glove.6B.50d.txt',
            'initial_lr': 1e-3,
-           'decay_factor': 0.2,
-           'batch_size': 32,
-           'im_features_size': 128,
-           'rnn_size': 512}
+           'decay_factor': 0.3,
+           'batch_size': 64,
+           'im_features_size': 256,
+           'rnn_size': 1024}
 
 class DeepSentiment():
     def __init__(self, config):
@@ -157,8 +157,8 @@ def train_deep_sentiment(checkpoints_dir, train_dir, num_steps):
             train_op,
             logdir=train_dir,
             init_fn=get_init_fn(checkpoints_dir),
-            save_interval_secs=60,
-            save_summaries_secs=60,
+            save_interval_secs=600,
+            save_summaries_secs=600,
             train_step_fn=train_step_fn,
             number_of_steps=num_steps)
             
