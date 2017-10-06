@@ -28,7 +28,8 @@ _CONFIG = {'mode': 'train',
            'decay_factor': 0.3,
            'batch_size': 64,
            'im_features_size': 256,
-           'rnn_size': 1024}
+           'rnn_size': 1024,
+           'final_endpoint': 'Mixed_5b'}
 
 class DeepSentiment():
     def __init__(self, config):
@@ -42,6 +43,7 @@ class DeepSentiment():
         batch_size = config['batch_size']
         im_features_size = config['im_features_size']
         rnn_size = config['rnn_size']
+        final_endpoint = config['final_endpoint']
 
         tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -56,7 +58,8 @@ class DeepSentiment():
         # Create the model, use the default arg scope to configure the batch norm parameters.
         is_training = (mode == 'train')
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            images_features, _ = inception_v1.inception_v1(images, num_classes=im_features_size, is_training=is_training)
+            images_features, _ = inception_v1.inception_v1(images, final_endpoint=final_endpoint,
+                num_classes=im_features_size, is_training=is_training)
 
         # Text model
         vocabulary, self.embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)

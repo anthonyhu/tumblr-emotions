@@ -17,7 +17,7 @@ if not tf.gfile.Exists(checkpoints_dir):
     download_pretrained_model(url, checkpoints_dir)
 
 # Fine-tune model
-train_dir = 'image_text_model/deep_sentiment_model'
+train_dir = 'image_text_model/deep_sentiment_model_trunc'
 num_steps = 20000
 train_deep_sentiment(checkpoints_dir, train_dir, num_steps)
 

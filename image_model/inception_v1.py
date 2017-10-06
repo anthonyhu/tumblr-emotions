@@ -226,6 +226,12 @@ def inception_v1_base(inputs,
         end_points[end_point] = net
         if final_endpoint == end_point: return net, end_points
 
+    # Retrain Mixed_5c layer
+    with slim.arg_scope(
+        [slim.conv2d, slim.fully_connected],
+        weights_initializer=trunc_normal(0.01), trainable=True):
+      with slim.arg_scope([slim.conv2d, slim.max_pool2d],
+                          stride=1, padding='SAME'):
         end_point = 'Mixed_5c'
         with tf.variable_scope(end_point):
           with tf.variable_scope('Branch_0'):
@@ -246,6 +252,7 @@ def inception_v1_base(inputs,
 
 
 def inception_v1(inputs,
+                 final_endpoint='Mixed_5c',
                  num_classes=1000,
                  is_training=True,
                  dropout_keep_prob=0.8,
@@ -287,7 +294,7 @@ def inception_v1(inputs,
                          reuse=reuse) as scope:
     with slim.arg_scope([slim.batch_norm, slim.dropout],
                         is_training=is_training):
-      net, end_points = inception_v1_base(inputs, scope=scope)
+      net, end_points = inception_v1_base(inputs, final_endpoint=final_endpoint, scope=scope)
       with tf.variable_scope('Logits'):
         net = slim.avg_pool2d(net, [7, 7], stride=1, scope='AvgPool_0a_7x7')
         net = slim.dropout(net,
