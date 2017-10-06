@@ -104,10 +104,10 @@ Tumblr is used worldwide but we only kept posts written in English. Basically, i
 
 [talk about dataset size, and reduction through preprocessing]
 
-\section{Visual Recognition}
-Pictures are valuable to accurately infer the emotion expressed by a user. For instance, happy photos might contain sunny landscapes while sad pictures might contain darker colors. To analyse images, we will use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks.
+\section{Visual recognition}
+Pictures are valuable to accurately infer the emotion expressed by a user. For instance, happy photos might contain sunny landscapes while sad pictures might contain darker colors. To extract visual insights from images, we will use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks.
 
-\subsection{Transfer Learning}
+\subsection{Transfer learning}
 Training a convolutional network from scratch can be difficult as a large amount of data is needed and many different architectures need to be tested before achieving satisfying performances. To circumvent this issue, we can take advantage of the pre-trained network named Inception [cite] that learned to recognise images through the ImageNet dataset with a deep architecture of 22 layers.
 
 Inception learned representations capturing the colors and arrangement of shapes of an image, which turn out to be relevant when dealing with images even for a different task. We could also say that the pre-trained network grasped the underlying structure of images. This statement rests on the hypothesis that all images are in a low-dimensional manifold, and recent advances in realistic photos generation through generative adversarial networks bolsters this idea [cite Radford, Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks.]. 
@@ -141,7 +141,7 @@ The fine-tuned Inception is compared to a baseline: random guessing that include
 
 The results are:
 \begin{table}[H]
-\caption{Comparison of models using raw images}
+\caption{Image model against random guessing}
 \begin{center}
     \begin{tabular}{| l | c | c |}
     \hline
@@ -149,6 +149,63 @@ The results are:
     & \textbf{accuracy} & \textbf{accuracy} \\ \hline
     \textbf{Random guessing} & 24\% & 24\% \\ \hline
     \textbf{Inception fine-tuned}  & 48\% & 42\% \\
+    \hline
+    \end{tabular}
+\end{center} 
+\end{table}
+
+\section{Natural language processing}
+Even as a human being, it can be difficult to guess the expressed emotion by only looking at a Tumblr image without reading its caption as shown by Figure \ref{surprised-unclear}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{Images/flower.jpg}
+    \caption{Which emotion is it?}
+    \label{surprised-unclear}
+\end{figure}
+
+It's unclear whether the user wants to convey happiness or surprise. Only by reading the text ``To who ever left this on my windshield outside of last nights art opening, I love you. You made my night.", we can finally conclude that the person was {\em surprised}. The text is extremely informative and is usually crucial to accurately infer the expressed emotion.
+
+\subsection{Word embedding}
+
+Neural networks only accept numbers as inputs, therefore the text has to be converted beforehand. A very successful way to capture the meaning of textual information is by using word embedding. Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how word embedding works: every word is projected into a high-dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
+
+We will be using Word2Vec [elaborate]
+
+Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space [cite seth1]
+
+However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb.
+
+The order information can be preserved using Recurrent Neural Networks
+
+\subsection{RNN}
+Each post will be broken down into a sequence of words and then fed to an LSTM [cite] that will infer the emotion of the user. On a more technical note, the vector of words will be represented by a list of ids from the Word2Vec vocabulary say $[3, 20, 1, 49, 6]$. To account for shorter posts, we'll have to zero-pad the vector -- the id 0 will actually be associated with a word token $<$PAD$>$ -- like $[3, 20, 1, 49, 6, 0, 0, ..., 0]$. For longer posts, we'll only keep the 200 first words. The model is:
+\begin{itemize}
+    \item Word embedding into a vector of dimension 300.
+    \item An LSTM layer of size 512.
+    \item An output layer of size 6.
+\end{itemize}
+
+\subsection{Result}
+The network was trained with:
+\begin{itemize}[topsep=0pt]
+    \item 10,000 training steps
+    \item Mini-batch of size 128
+    \item Adam optimizer with an initial learning rate of 0.01
+    \item Learning rate decay of $\frac{1}{2}$ every 1000 steps
+    \item LSTM unrolled for 20 words
+    \item Gradient clipping with a maximum norm of 5.0
+\end{itemize}
+
+\begin{table}[H]
+\caption{Text model against random guessing}
+\begin{center}
+    \begin{tabular}{| l | c | c |}
+    \hline
+    & \textbf{Train} & \textbf{Test} \\
+    & \textbf{accuracy} & \textbf{accuracy} \\ \hline
+    \textbf{Random guessing} & 24\% & 24\% \\ \hline
+    \textbf{LSTM}  & 63\% & 61\% \\
     \hline
     \end{tabular}
 \end{center} 
