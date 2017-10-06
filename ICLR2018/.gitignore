@@ -23,3 +23,4 @@
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+.out
