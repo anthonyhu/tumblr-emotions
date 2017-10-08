@@ -155,7 +155,7 @@ The results are:
 \end{table}
 
 \section{Natural language processing}
-Even as a human being, it can be difficult to guess the expressed emotion by only looking at a Tumblr image without reading its caption as shown by Figure \ref{surprised-unclear}.
+Even as a human being, it can be difficult to guess the expressed emotion only by looking at a Tumblr image without reading its caption as shown by Figure \ref{surprised-unclear}.
 
 \begin{figure}[H]
     \centering
@@ -164,29 +164,28 @@ Even as a human being, it can be difficult to guess the expressed emotion by onl
     \label{surprised-unclear}
 \end{figure}
 
-It's unclear whether the user wants to convey happiness or surprise. Only by reading the text ``To who ever left this on my windshield outside of last nights art opening, I love you. You made my night.", we can finally conclude that the person was {\em surprised}. The text is extremely informative and is usually crucial to accurately infer the expressed emotion.
+It's unclear whether the user wants to convey happiness or surprise. Only after reading the text ``To who ever left this on my windshield outside of last nights art opening, I love you. You made my night.", we can finally conclude that the person was {\em surprised}. The text is extremely informative and is usually crucial to accurately infer the emotional state.
 
 \subsection{Word embedding}
-
-Neural networks only accept numbers as inputs, therefore the text has to be converted beforehand. A very successful way to capture the meaning of textual information is by using word embedding. Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with one-hot encoding as `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That's exactly how word embedding works: every word is projected into a high-dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
+Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with words one-hot encoded as for instance `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That is exactly how word embedding works: every word is projected into a high-dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
 
 We will be using Word2Vec [elaborate]
 
 Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space [cite seth1]
 
-However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb.
+However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb. The order information can be preserved using Recurrent Neural Networks.
 
-The order information can be preserved using Recurrent Neural Networks
+\subsection{Sequence input}
+The text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM [cite]. To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words [discuss, mean number of words in a post?].
 
-\subsection{RNN}
-Each post will be broken down into a sequence of words and then fed to an LSTM [cite] that will infer the emotion of the user. On a more technical note, the vector of words will be represented by a list of ids from the Word2Vec vocabulary say $[3, 20, 1, 49, 6]$. To account for shorter posts, we'll have to zero-pad the vector -- the id 0 will actually be associated with a word token $<$PAD$>$ -- like $[3, 20, 1, 49, 6, 0, 0, ..., 0]$. For longer posts, we'll only keep the 200 first words. The model is:
+We now evaluate the performance of the text model described below:
 \begin{itemize}
     \item Word embedding into a vector of dimension 300.
-    \item An LSTM layer of size 512.
+    \item An LSTM layer of size 1024.
     \item An output layer of size 6.
 \end{itemize}
 
-\subsection{Result}
+\subsection{Results}
 The network was trained with:
 \begin{itemize}[topsep=0pt]
     \item 10,000 training steps
@@ -205,12 +204,80 @@ The network was trained with:
     & \textbf{Train} & \textbf{Test} \\
     & \textbf{accuracy} & \textbf{accuracy} \\ \hline
     \textbf{Random guessing} & 24\% & 24\% \\ \hline
-    \textbf{LSTM}  & 63\% & 61\% \\
+    \textbf{LSTM model}  & 63\% & 61\% \\
     \hline
     \end{tabular}
 \end{center} 
 \end{table}
 
+\section{Deep Sentiment}
+Real-world information oftentimes comes in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect [cite mcgurk]. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if we know the actual sound is a /{\em ba}/, we cannot stop our brain from interpreting it as a /{\em da}/.
+
+Likewise, an image almost always comes with a caption as different interpretations can arise when textual context is not provided, as shown in Figure \ref{ambiguous}:
+
+\begin{figure}[H]
+    \begin{subfigure}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{Images/scared.jpg}
+        \caption{``Planes might just be the most frightening thing ever." \textbf{scared}}
+    \end{subfigure}
+    \begin{subfigure}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{Images/scared.jpg}
+        \caption{``I hate it when people are taking too much space on planes." \textbf{angry}}
+    \end{subfigure}
+    \caption{Different meanings with different captions.}
+    \label{ambiguous}
+\end{figure}
+
+Exploiting both visual and textual information is therefore key to understand the user's emotional state. Deep Sentiment is the name of the deep neural network incorporating visual recognition and text analysis.
+
+\subsection{Architecture}
+Deep Sentiment builds on the models we have seen before as shown in Figure \ref{deep-sentiment}:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Images/deep-sentiment.png}
+    \caption{Deep Sentiment architecture}
+    \label{deep-sentiment}
+\end{figure}
+
+\begin{enumerate}
+    \item The image go through the pre-trained Inception model that extracts features from the images: more precisely with 256 neurons in the last Inception 
+    layer.
+    \item The text is embedded in a high-dimensional space with Word2Vec and is fed to an LSTM with 1024 neurons.
+    \item The two outputs are concatenated and fed to a fully connected layer with 512 neurons. 
+    \item The final layer contains 6 neurons, one for each basic emotion.
+    \item Softmax is applied to the final layer to give the probability distribution of the emotional state of the user.
+\end{enumerate}
+
+\section{Results}
+Deep Sentiment was trained with:
+\begin{itemize}[topsep=0pt]
+    \item 10,000 training steps
+    \item Mini-batch size of 32
+    \item Adam optimizer with an initial learning rate of 0.001
+    \item Learning rate decay of $\frac{1}{2}$ every 1000 steps
+\end{itemize}
+
+This model combining text and image outperforms the algorithms only using those elements separately with 75\% train accuracy and 70\% test accuracy. This shows that just like a human being, a neural network needs both visual and textual information to determine the emotion conveyed by a post. The synergy between visual recognition and natural language processing is impressive as shown in the comparison table \ref{all-results}.
+
+\begin{table}[H]
+\caption{Comparison of models}
+\begin{center}
+    \begin{tabular}{| l | c | c | c |}
+    \hline
+    & \textbf{Loss} & \textbf{Train} & \textbf{Test} \\
+    & & \textbf{accuracy} & \textbf{accuracy} \\ \hline
+    \textbf{Random guessing} & - & 24\% & 24\% \\ \hline
+    \textbf{Inception fine-tuned}  & 1.61 & 48\% & 42\% \\ \hline
+    \textbf{LSTM model} & 1.01 & 63\% & 61\% \\ \hline
+    \textbf{Deep Sentiment} & \textbf{0.80} & \textbf{75\%} & \textbf{70\%} \\
+    \hline
+    \end{tabular}
+\end{center} 
+\label{all-results}
+\end{table}
 
 \section{Citations, figures, tables, references}
 \label{others}
