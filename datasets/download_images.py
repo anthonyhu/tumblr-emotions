@@ -10,7 +10,7 @@ from text_model.text_preprocessing import preprocess_one_df
 from text_model.text_preprocessing import _load_embedding_weights_glove, _load_embedding_weights_word2vec
 
 # Number of words in a post
-_POST_SIZE = 200
+_POST_SIZE = 50
 
 def download_im(search_query, start, end, dataset_dir, subdir='photos'):
     """Download images using the urls in the dataframe specified by the search query.

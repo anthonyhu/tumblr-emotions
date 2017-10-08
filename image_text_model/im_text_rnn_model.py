@@ -18,7 +18,7 @@ from image_model.im_model import load_batch_with_text, get_init_fn
 from datasets.convert_to_dataset import get_split_with_text
 import matplotlib.pyplot as plt
 
-_POST_SIZE = 20
+_POST_SIZE = 50
 _CONFIG = {'mode': 'train',
            'dataset_dir': 'data',
            'text_dir': 'text_model',
@@ -29,7 +29,7 @@ _CONFIG = {'mode': 'train',
            'batch_size': 64,
            'im_features_size': 256,
            'rnn_size': 1024,
-           'final_endpoint': 'Mixed_5b'}
+           'final_endpoint': 'Mixed_5c'}
 
 class DeepSentiment():
     def __init__(self, config):

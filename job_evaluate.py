@@ -9,8 +9,8 @@ slurm_parameter = int(os.environ['SLURM_ARRAY_TASK_ID'])
 
 #checkpoint_dir = 'image_model/fine_tuned_model'
 #log_dir = 'image_model/model_eval'
-checkpoint_dir = 'image_text_model/deep_sentiment_model_trunc'
-log_dir = 'image_text_model/model_eval_trunc'
+checkpoint_dir = 'image_text_model/deep_sentiment_model'
+log_dir = 'image_text_model/model_eval'
 num_evals = 50
 if slurm_parameter == 0:
 	mode = 'train'

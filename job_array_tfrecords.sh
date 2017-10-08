@@ -13,7 +13,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --time=2:00:00
 # Memory per CPU in megabytes
-#SBATCH --mem-per-cpu=16000
+#SBATCH --mem-per-cpu=32000
 #SBATCH --array=0-0%1
 #SBATCH --output=/data/localhost/not-backed-up/ahu/jobname_%A_%a.txt
 

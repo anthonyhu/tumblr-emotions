@@ -48,7 +48,7 @@ _RANDOM_SEED = 0
 _NUM_SHARDS = 5
 
 # Number of words in a post
-_POST_SIZE = 20
+_POST_SIZE = 50
 
 # Filename containing the train/valid split size
 _TRAIN_VALID_FILENAME = 'train_valid_split.txt'

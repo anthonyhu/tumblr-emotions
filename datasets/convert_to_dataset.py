@@ -31,7 +31,7 @@ _FILE_PATTERN = 'tumblr_%s_*.tfrecord'
 # Filename containing the train/valid split size
 _TRAIN_VALID_FILENAME = 'train_valid_split.txt'
 
-_POST_SIZE = 20
+_POST_SIZE = 50
 
 #SPLITS_TO_SIZES = {'train': 128, 'validation': 30}
 
