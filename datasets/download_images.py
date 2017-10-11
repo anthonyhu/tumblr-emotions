@@ -56,7 +56,7 @@ def download_im_with_text(search_query, start, end, dataset_dir='data', subdir='
     Parameters:
         search_query: A string giving the sentiment to load the corresponding dataframe.
         start: A start index for the loaded dataframe.
-        end: An end index for the loaded dataframe.
+        end: An end index for the loaded dataframe. -1 corresponds to the last row.
         dataset_dir: A directory where the dataframes are stored.
         subdir: A subdirectory to store the photos.
 
@@ -75,6 +75,9 @@ def download_im_with_text(search_query, start, end, dataset_dir='data', subdir='
         vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
 
     df = preprocess_one_df(vocabulary, embedding, search_query, _POST_SIZE)
+    if end == -1:
+        end = df.shape[0]
+
     links = df['photo']
     # Create subdir if it doesn't exist
     if not tf.gfile.Exists(os.path.join(dataset_dir, subdir)):
