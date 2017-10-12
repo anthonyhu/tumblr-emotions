@@ -311,7 +311,6 @@ def convert_images_with_text(dataset_dir, num_valid, photos_subdir='photos', tfr
 
   # Load dataframes
   df_dict = dict()
-  emotions = ['happy', 'sad', 'scared', 'angry', 'surprised', 'disgusted']
   emb_name = 'glove'
   text_dir = 'text_model'
   emb_dir = 'embedding_weights'
@@ -321,7 +320,7 @@ def convert_images_with_text(dataset_dir, num_valid, photos_subdir='photos', tfr
   else:
       vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
 
-  for emotion in emotions:
+  for emotion in class_names:
     df_dict[emotion] = preprocess_one_df(vocabulary, embedding, emotion, _POST_SIZE)
 
   # First, convert the training and validation sets.
