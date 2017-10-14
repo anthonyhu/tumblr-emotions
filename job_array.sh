@@ -11,10 +11,10 @@
 #SBATCH --nodes=1
 # CPUs required for each job
 #SBATCH --cpus-per-task=1
-#SBATCH --time=24:00:00
+#SBATCH --time=12:00:00
 # Memory per CPU in megabytes
 #SBATCH --mem-per-cpu=16000
-#SBATCH --array=0-9%10
+#SBATCH --array=0-15%16
 #SBATCH --output=/data/localhost/not-backed-up/ahu/jobname_%A_%a.txt
 
 # Now run your script.
