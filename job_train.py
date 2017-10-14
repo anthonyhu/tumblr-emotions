@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 from image_model.im_model import download_pretrained_model
 from image_model.im_model import train_image_model
+from text_model.text_embedding import train_text_model
 from image_text_model.im_text_rnn_model import train_deep_sentiment
 
 # Obtain the environment variables to determine the parameters
@@ -22,6 +23,9 @@ model_type = 'image'
 if model_type == 'image':
 	train_dir = 'image_model/finetuned_image_model'
 	train_image_model(checkpoints_dir, train_dir, num_steps)
+elif model_type == 'text':
+	train_dir = 'text_model/trained_text_model'
+	train_text_model(train_dir, num_steps)
 elif model_type == 'image_text':
 	train_dir = 'image_text_model/deep_sentiment_model'
 	train_deep_sentiment(checkpoints_dir, train_dir, num_steps)
