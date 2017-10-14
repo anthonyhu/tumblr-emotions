@@ -21,6 +21,12 @@ from datasets.convert_images_tfrecords import get_numpy_data
 
 # Seed for reproducibility
 _RANDOM_SEED = 0
+_CONFIG = {'mode': 'train',
+           'dataset_dir': 'data',
+           'initial_lr': 1e-3,
+           'decay_factor': 0.3,
+           'batch_size': 64,
+           'final_endpoint': 'Mixed_5c'}
 
 def download_pretrained_model(url, checkpoint_dir):
     """Download pretrained inception model and store it in checkpoint_dir.
@@ -134,11 +140,36 @@ def get_init_fn(checkpoints_dir, model_name='inception_v1.ckpt'):
         os.path.join(checkpoints_dir, model_name),
         variables_to_restore)
 
-def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
-    """Fine tune the inception model, retraining the last layer.
+class ImageModel():
+    def __init__(self, config):
+        self.config = config
+        mode = config['mode']
+        dataset_dir = config['dataset_dir']
+        initial_lr = config['initial_lr']
+        batch_size = config['batch_size']
+        final_endpoint = config['final_endpoint']
+
+        tf.logging.set_verbosity(tf.logging.INFO)
+
+        self.learning_rate = tf.Variable(initial_lr, trainable=False)
+        self.lr_rate_placeholder = tf.placeholder(tf.float32)
+        self.lr_rate_assign = self.learning_rate.assign(self.lr_rate_placeholder)
+
+        self.dataset = get_split_with_text(mode, dataset_dir)
+        image_size = inception_v1.default_image_size
+        images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
+            
+        self.nb_emotions = self.dataset.num_classes
+        # Create the model, use the default arg scope to configure the batch norm parameters.
+        is_training = (mode == 'train')
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            self.logits, _ = inception_v1.inception_v1(images, final_endpoint=final_endpoint,
+                num_classes=self.nb_emotions, is_training=is_training)
+
+def train_image_model(checkpoints_dir, train_dir, num_steps):
+    """Fine tune the Image model, retraining Mixed_5c.
 
     Parameters:
-        dataset_dir: The directory containing the data.
         checkpoints_dir: The directory contained the pre-trained model.
         train_dir: The directory to save the trained model.
         num_steps: The number of steps training the model.
@@ -149,96 +180,10 @@ def fine_tune_model(dataset_dir, checkpoints_dir, train_dir, num_steps):
     tf.gfile.MakeDirs(train_dir)
 
     with tf.Graph().as_default():
-        tf.logging.set_verbosity(tf.logging.INFO)
-        
-        dataset = get_split('train', dataset_dir)
-        image_size = inception_v1.default_image_size
-        images, _, labels = _load_batch(dataset, height=image_size, width=image_size)
-
-        # Load validation data
-        dataset_valid = get_split('validation', dataset_dir)
-        images_valid, _, labels_valid = _load_batch(dataset_valid, batch_size=dataset_valid.num_samples, shuffle=False, 
-                                                    height=image_size, width=image_size)
-        
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, is_training=True)
-            logits_valid, _ = inception_v1.inception_v1(images_valid, num_classes=dataset_valid.num_classes, 
-                                           is_training=False, reuse=True)
-            
+        model = ImageModel(_CONFIG)
         # Specify the loss function:
-        one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-        slim.losses.softmax_cross_entropy(logits, one_hot_labels)
-        total_loss = slim.losses.get_total_loss()
-
-        # Create some summaries to visualize the training process:
-        tf.summary.scalar('losses/Total_Loss', total_loss)
-      
-        # Specify the optimizer and create the train op:
-        optimizer = tf.train.AdamOptimizer(learning_rate=1e-5)
-        train_op = slim.learning.create_train_op(total_loss, optimizer)
-
-        # Accuracy metrics
-        accuracy_valid = slim.metrics.accuracy(tf.cast(labels_valid, tf.int32),
-                                               tf.cast(tf.argmax(logits_valid, 1), tf.int32))
-
-        def train_step_fn(session, *args, **kwargs):
-            total_loss, should_stop = train_step(session, *args, **kwargs)
-
-            #variables_to_print = ['InceptionV1/Conv2d_2b_1x1/weights:0', 'InceptionV1/Mixed_4b/Branch_3/Conv2d_0b_1x1/weights:0',
-             #                     'InceptionV1/Logits/Conv2d_0c_1x1/weights:0']
-            #for v in slim.get_model_variables():
-             #   if v.name in variables_to_print:
-              #      print(v.name)
-               #     print(session.run(v))
-                #    print('\n')
-
-            acc_valid = session.run(accuracy_valid)
-            print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
-            sys.stdout.flush()
-            train_step_fn.step += 1
-            return [total_loss, should_stop]
-        
-        train_step_fn.step = 0
-
-        # Run the training:
-        final_loss = slim.learning.train(
-            train_op,
-            logdir=train_dir,
-            init_fn=get_init_fn(checkpoints_dir),
-            train_step_fn=train_step_fn,
-            number_of_steps=num_steps)
-            
-    print('Finished training. Last batch loss {0:.3f}'.format(final_loss))
-
-def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps, learning_rate):
-    """Fine tune the inception model, retraining the last layer.
-
-    Parameters:
-        dataset_dir: The directory containing the data.
-        checkpoints_dir: The directory contained the pre-trained model.
-        train_dir: The directory to save the trained model.
-        num_steps: The number of steps training the model.
-    """
-    if tf.gfile.Exists(train_dir):
-        # Delete old model
-        tf.gfile.DeleteRecursively(train_dir)
-    tf.gfile.MakeDirs(train_dir)
-
-    with tf.Graph().as_default():
-        tf.logging.set_verbosity(tf.logging.INFO)
-        
-        dataset = get_split_with_text('train', dataset_dir)
-        image_size = inception_v1.default_image_size
-        images, _, labels = _load_batch(dataset, height=image_size, width=image_size)
-        
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, is_training=True)
-            
-        # Specify the loss function:
-        one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-        slim.losses.softmax_cross_entropy(logits, one_hot_labels)
+        one_hot_labels = slim.one_hot_encoding(model.labels, model.nb_emotions)
+        slim.losses.softmax_cross_entropy(model.logits, one_hot_labels)
         total_loss = slim.losses.get_total_loss()
 
         # Create some summaries to visualize the training process
@@ -247,10 +192,21 @@ def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps
         tf.summary.scalar('Loss', total_loss)
       
         # Specify the optimizer and create the train op:
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate=model.learning_rate)
         train_op = slim.learning.create_train_op(total_loss, optimizer)
 
+        batch_size = _CONFIG['batch_size']
+        initial_lr = _CONFIG['initial_lr']
+        decay_factor = _CONFIG['decay_factor']
+        nb_batches = model.dataset.num_samples / batch_size
         def train_step_fn(session, *args, **kwargs):
+            # Decaying learning rate every epoch
+            if train_step_fn.step % (nb_batches) == 0:
+                lr_decay = decay_factor ** train_step_fn.epoch
+                session.run(model.lr_rate_assign, feed_dict={model.lr_rate_placeholder: initial_lr * lr_decay})
+                print('New learning rate: {0}'. format(initial_lr * lr_decay))
+                train_step_fn.epoch += 1
+
             total_loss, should_stop = train_step(session, *args, **kwargs)
 
             #variables_to_print = ['InceptionV1/Conv2d_2b_1x1/weights:0', 'InceptionV1/Mixed_4b/Branch_3/Conv2d_0b_1x1/weights:0',
@@ -262,84 +218,26 @@ def fine_tune_model_with_text(dataset_dir, checkpoints_dir, train_dir, num_steps
                 #    print('\n')
             #acc_valid = session.run(accuracy_valid)
             #print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
-            sys.stdout.flush()
+            #sys.stdout.flush()
             train_step_fn.step += 1
             return [total_loss, should_stop]
         
         train_step_fn.step = 0
+        train_step_fn.epoch = 0
 
         # Run the training:
         final_loss = slim.learning.train(
             train_op,
             logdir=train_dir,
             init_fn=get_init_fn(checkpoints_dir),
-            save_interval_secs=60,
-            save_summaries_secs=60,
-            #train_step_fn=train_step_fn,
+            save_interval_secs=600,
+            save_summaries_secs=600,
+            train_step_fn=train_step_fn,
             number_of_steps=num_steps)
             
     print('Finished training. Last batch loss {0:.3f}'.format(final_loss))
 
-def evaluate_model(checkpoint_dir, log_dir, num_evals):
-    """Visualise results with: tensorboard --logdir=logdir.
-    
-    Parameters:
-        checkpoint_dir: Checkpoint of the saved model during training.
-        log_dir: Directory to save logs.
-        num_evals: Number of batches to evaluate (mean of the batches is displayed).
-    """
-    
-    with tf.Graph().as_default():
-        tf.logging.set_verbosity(tf.logging.INFO)
-
-        dataset_dir = 'data'
-        # Load train data
-        image_size = inception_v1.default_image_size
-
-        dataset_train = get_split_with_text('train', dataset_dir)
-        images_train, _, labels_train = _load_batch(dataset_train, batch_size=32, shuffle=False, 
-                                                    height=image_size, width=image_size)
-
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            logits_train, _ = inception_v1.inception_v1(images_train, num_classes=dataset_train.num_classes, 
-                                                        is_training=False, reuse=True)
-        # Accuracy metrics
-        accuracy_train = slim.metrics.streaming_accuracy(tf.cast(labels_train, tf.int32),
-                                                         tf.cast(tf.argmax(logits_train, 1), tf.int32))
-
-        # Load validation data
-        dataset_valid = get_split_with_text('validation', dataset_dir)
-        images_valid, _, labels_valid = _load_batch(dataset_valid, batch_size=32, shuffle=False, 
-                                                    height=image_size, width=image_size)
-
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            logits_valid, _ = inception_v1.inception_v1(images_valid, num_classes=dataset_valid.num_classes, 
-                                                        is_training=False, reuse=True)
-        # Accuracy metrics
-        accuracy_valid = slim.metrics.streaming_accuracy(tf.cast(labels_valid, tf.int32),
-                                                         tf.cast(tf.argmax(logits_valid, 1), tf.int32))
-
-        # Choose the metrics to compute:
-        names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
-            'accuracy_train': accuracy_train,
-            'accuracy_valid': accuracy_valid,
-        })
-
-        for metric_name, metric_value in names_to_values.iteritems():
-            tf.summary.scalar(metric_name, metric_value)
-
-        # Evaluate every eval_interval_secs secs or if not specified,
-        # every time the checkpoint_dir changes
-        slim.evaluation.evaluation_loop(
-            '',
-            checkpoint_dir,
-            log_dir,
-            num_evals=num_evals,
-            eval_op=names_to_updates.values())
-
-def evaluate_model_2(checkpoint_dir, log_dir, mode, num_evals):
+def evaluate_image_model(checkpoint_dir, log_dir, mode, num_evals):
     """Visualise results with: tensorboard --logdir=logdir. Now has train/validation curves on the same plot
     
     Parameters:
@@ -348,25 +246,13 @@ def evaluate_model_2(checkpoint_dir, log_dir, mode, num_evals):
         mode: train or validation.
         num_evals: Number of batches to evaluate (mean of the batches is displayed).
     """
-    
     with tf.Graph().as_default():
-        tf.logging.set_verbosity(tf.logging.INFO)
+        _CONFIG['mode'] = mode
+        model = ImageModel(_CONFIG)
 
-        dataset_dir = 'data'
-        # Load train data
-        image_size = inception_v1.default_image_size
-
-        dataset = get_split_with_text(mode, dataset_dir)
-        images, _, labels = _load_batch(dataset, batch_size=32, shuffle=False, 
-                                        height=image_size, width=image_size)
-
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            logits, _ = inception_v1.inception_v1(images, num_classes=dataset.num_classes, 
-                                                  is_training=False, reuse=True)
         # Accuracy metrics
-        accuracy = slim.metrics.streaming_accuracy(tf.cast(labels, tf.int32),
-                                                   tf.cast(tf.argmax(logits, 1), tf.int32))
+        accuracy = slim.metrics.streaming_accuracy(tf.cast(model.labels, tf.int32),
+                                                   tf.cast(tf.argmax(model.logits, 1), tf.int32))
 
         # Choose the metrics to compute:
         names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
@@ -380,6 +266,7 @@ def evaluate_model_2(checkpoint_dir, log_dir, mode, num_evals):
 
         # Evaluate every eval_interval_secs secs or if not specified,
         # every time the checkpoint_dir changes
+        # tf.get_variable variables are also restored
         slim.evaluation.evaluation_loop(
             '',
             checkpoint_dir,
