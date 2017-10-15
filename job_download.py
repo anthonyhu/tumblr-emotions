@@ -10,20 +10,11 @@ slurm_parameter = int(os.environ['SLURM_ARRAY_TASK_ID'])
 # Our parameters we would like to grid search over
 emotions = ['happy', 'sad', 'scared', 'angry', 'surprised', 'disgusted', 'annoyed', 'bored', 
 'love', 'calm', 'amazed', 'optimistic', 'interested', 'pensive', 'ashamed', 'excited']
-df_sizes = {'happy': 116930,
-            'sad': 66747, 
-            'angry': 59899, 
-            'surprised': 8625,
-            'scared': 67756,
-            'disgusted': 6349}
 
 search_query = emotions[slurm_parameter]
 #indices = np.linspace(9000, 60000, 7, dtype=int)
 #start = indices[slurm_parameter]
 #end = indices[slurm_parameter + 1]
-
-if search_query == 'happy':
-	end = 60000
 
 end = -1
 download_im_with_text(search_query, 0, end, 'data')
