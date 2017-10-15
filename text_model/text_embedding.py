@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 
 from time import time
-from sklearn.model_selection import train_test_split
+#from sklearn.model_selection import train_test_split
 from tensorflow.contrib import slim
 from tensorflow.contrib.slim.python.slim.learning import train_step
 
