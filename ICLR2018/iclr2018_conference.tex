@@ -9,6 +9,8 @@
 \usepackage{float}
 %% To remove whitespace before enumerate
 \usepackage{enumitem}
+%% For thicker table horizontal lines
+\usepackage{booktabs}
 
 \title{Deep Sentiment Analysis on Tumblr}
 
@@ -16,24 +18,11 @@
 % as long as the \iclrfinalcopy macro remains commented out below.
 % Non-anonymous submissions will be rejected without review.
 
-\author{Anthony Hu \& Seth Flaxman \thanks{ Use footnote for providing further information
-about author (webpage, alternative address)---\emph{not} for acknowledging
-funding agencies.  Funding acknowledgements go at the end of the paper.} \\
+\author{Anthony Hu \& Seth Flaxman \\
 Department of Statistics\\
 University of Oxford\\
 Oxford, United Kingdom \\
-\texttt{\{anthony.hu,flaxman\}@stats.ox.ac.uk} \\
-%\And
-%Ji Q. Ren \& Yevgeny LeNet \\
-%Department of Computational Neuroscience \\
-%University of the Witwatersrand \\
-%Joburg, South Africa \\
-%\texttt{\{robot,net\}@wits.ac.za} \\
-%\AND
-%Coauthor \\
-%Affiliation \\
-%Address \\
-%\texttt{email}
+\texttt{\{anthony.hu,flaxman\}@stats.ox.ac.uk}
 }
 
 % The \author macro works with any number of authors. There are two commands
@@ -55,64 +44,112 @@ Oxford, United Kingdom \\
 \maketitle
 
 \begin{abstract}
-We propose a novel approach to Sentiment Analysis using Deep Neural Networks combining Visual Recognition and Natural Language Processing. Our approach leverages Tumblr posts containing images and text to predict the emotional state of users. Deep convolutional layers extract relevant features from images and high-dimensional word embedding followed by a recurrent layer process the textual information in order to infer the emotion conveyed by a given Tumblr post. We demonstrate that our network architecture, named Deep Sentiment, learns meaningful relations between visual data and language as it vastly outperforms models using a single modality. We then show that Deep Sentiment can also be adapted to generate images and text representative of an emotion. 
+We introduce a new large-scale multimodal dataset for sentiment analysis named TumblrData, that contains over 1 million labeled data with text, image and the associated emotion. TumblrData aims to provide a mean to evaluate machine learning models using visual and textual contents for sentiment analysis research.
+
+We propose a novel approach to sentiment analysis using deep neural networks combining visual recognition and natural language processing. Our approach leverages Tumblr posts containing images and text to predict the emotional state of users. Deep convolutional layers extract relevant features from images and high-dimensional word embedding followed by a recurrent layer process the textual information in order to infer the emotion conveyed by a given Tumblr post. We demonstrate that our network architecture, named Deep Sentiment, learns meaningful relations between visual data and language as it outperforms models using a single modality.% We then show that Deep Sentiment can also be adapted to generate images and text representative of an emotion. 
 \end{abstract}
 
 \section{Introduction}
-Sentiment analysis has been an active area of research in the past few years, especially on the readily available Twitter data, e.g. \citet{Bollen} who investigated the impact of collective mood states on stock market or \cite{Seth-16} who analysed day-of-week population well-being.
+Sentiment analysis has been an active area of research in the past few years, especially on the readily available Twitter data, e.g. \citet{Bollen} who investigated the impact of collective mood states on stock market or \cite{Flaxman-16} who analysed day-of-week population well-being.
 
-Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing more expressiveness, and are not focused on the textual content but on the visual content. A Tumblr post will almost always be an image with some text accompanying the latter. Pictures have become prevalent on social media and characterising them could enable the understanding of billions of users. 
+Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing more expressiveness, and are not focused on the textual content but on the visual content. A Tumblr post will almost always be an image with some text accompanying the latter. Pictures have become prevalent on social media and characterising them could enable the understanding of billions of users. Unfortunately, there is no large publicly available dataset for multimodal sentiment analysis. This paper provides a new dataset, TumblrData \footnote{\texttt{https://github.com/anthonyhu/tumblr-sentiment}}, that will allow the research community to learn multimodal feature representations of emotions.
 
-We propose a novel method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the tags, considered as the `self-reported' emotion of the user. Our model incorporates both text and image and we aim to `read' them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
+Also, we propose a novel method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the Tumblr tags, considered as the `self-reported' emotion of the user. Our model incorporates both text and image and we aim to `read' them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
 
 \begin{itemize}
     \item We fine-tune a pre-trained Deep Convolutional Neural Network, named Inception \citep{Szegedy-15}, to our specific task of emotion inferring.
-    \item We project the text in a rich high-dimensional space with a word representation learned by Word2Vec \citep{Mikolov-13}. The word vectors then go through a Recurrent Neural Network which preserves the word order and captures the semantics of human language.
+    \item We project the text in a rich high-dimensional space with a word representation learned by GloVe \citep{Pennington-14} The word vectors then go through a Recurrent Neural Network which preserves the word order and captures the semantics of human language.
     \item A fully-connected layer combines the information in the two modalities and a final softmax output layer gives the probability distribution of the emotional state of the user.
 \end{itemize}
 
-We will also see that Deep Sentiment can be rearranged to generate Tumblr posts expressing one of the learned emotion.
+%We will also see that Deep Sentiment can be rearranged to generate Tumblr posts expressing one of the learned emotion.
 
-\section{Tumblr data}
+\section{TumblrData}
 
-\subsection{The dataset}
-Tumblr is a microblogging service where users post multimedia content with the following attributes: an image, text and tags. The tags are really valuable as they indicate the user's state of mind when writing his post. Ekman popularised the idea that there are six basic emotions [cite Ekman]: happiness, sadness, anger, surprise, fear and disgust. These emotions are said to be {\em basic} as they are hardwired regardless of the species: basic emotions are innate, universal, automatic and induce fast reactions that are linked with a high survival rate. [Might need to rewrite when posts with other emotions are added]
+Tumblr is a microblogging service where users post multimedia content with the following attributes: an image, text and tags. The tags are really valuable as they indicate the user's state of mind when writing his post. 
 
-To build our dataset, queries were made through the Tumblr API searching for each of the six emotions appearing in the tags. We considered adjectives as they were more commonly used on Tumblr: \#happy, \#sad, \#angry, \#surprised, \#scared and \#disgusted. The emotion would then become the {\em label} of the post that has visual and textual contents as features. Figure \ref{fig:emotions} shows two posts with their associated emotions:
+To build our dataset, queries were made through the Tumblr API searching for an emotion appearing in the tags. The 16 emotions retained are those with a high relative frequencies among the PANAS-X scale \citep{PANAS-X}. In some posts, the tag containing the emotion of the post also appeared in the text itself, undermining the possibility of learning meaningful relationships between the features and the emotion expressed. We thus removed from the text the tags containing the emotion to be predicted.
+
+Tumblr is used worldwide but we only kept posts written in English. Basically, if a post contained less than a given number of English word, it was deemed as non-English and removed from the dataset. The threshold was set to 5 English words as it appeared to filter out reasonably well non-English posts. [To change: filter posts with less than 90\% of English words] The vocabulary of English words was obtained from GloVe. Figure \ref{fig:emotions} shows two posts with their associated emotions and table \ref{tumblrdata} summarises the statistics of the data.
 
 \begin{figure}[H]
     \begin{subfigure}[t]{.5\textwidth}
         \vskip 0pt %Necessary to align on image and not caption
         \centering
-        \includegraphics[width=.8\linewidth]{Images/happy.jpg}
-        \caption{\textbf{Happy}: ``Just relax with this amazing view \#bigsur \#california \#roadtrip \#usa \#life \#fitness (at McWay Falls)"}
+        \includegraphics[width=.2\linewidth]{Images/optimistic.jpg}
+        \caption{\textbf{Optimistic}: ``The most beautiful thing we can experience is the mysterious. It is the source of all true art and science -- Albert Einstein."}
    \end{subfigure}
    \begin{subfigure}[t]{.5\textwidth}
        \vskip 0pt
        \centering
-       \includegraphics[width=.5\linewidth]{Images/sad.jpg}
-       \caption{\textbf{Sad}: ``It's okay to be upset. It's okay to not always be happy. It's okay to cry. Never hide your emotions in fear of upsetting others or of being a bother. If you think no one will listen. Then I will."}
+       \includegraphics[width=.2\linewidth]{Images/sad.jpg}
+       \caption{\textbf{Sad}: ``It's okay to be upset. It's okay to not always be happy. It's okay to cry. Never hide your emotions in fear of upsetting others or of being a bother."}
     \end{subfigure}
     \caption{Examples of Tumblr posts}
     \label{fig:emotions}
 \end{figure}
 
-\subsection{Data preprocessing}
-In some posts, the tag containing the emotion of the post also appeared in the text itself, undermining the possibility of learning meaningful relationships between the features and the emotion expressed. We thus removed from the text the tags containing the emotion to be predicted.
-
-Tumblr is used worldwide but we only kept posts written in English. Basically, if a post contained less than a given number of English word, it was deemed as non-English and removed from the dataset. The threshold was set to 5 English words as it appeared to filter out reasonably well non-English posts. [To change: filter posts with less than 90\% of English words] The vocabulary of English words was obtained from Word2Vec.
-
-[talk about dataset size, and reduction through preprocessing]
+\begin{table}[H]
+\caption{Summary statistics for the TumblrData dataset, that spans from January 2011 to September 2017}
+\begin{center}
+    \begin{tabular}{ccc}
+    \multicolumn{3}{c}{{\large \textbf{TumblrData}}} \\
+    \addlinespace[0.2cm]
+    \toprule
+    Posts & In English & With Image \\
+    \midrule
+    1,015,140 & 582,231 & 258,803 \\
+    \bottomrule
+    \end{tabular}
+	
+    \vspace{0.2cm}
+    
+    \begin{tabular}{lrrr}
+    \toprule
+    Emotion & Posts & In English & With Image\\
+    \midrule
+Happy & 189,841 & 62\% & 29\% \\
+Calm & 139,911 & 37\% & 29\% \\
+Sad & 124,900 & 53\% & 15\% \\
+Scared & 104,161 & 65\% & 20\% \\
+Bored & 101,856 & 54\% & 29\% \\
+Angry & 100,033 & 60\% & 21\% \\
+Annoyed & 72,993 & 78\% & 10\% \\
+Love & 66,146 & 61\% & 39\% \\
+Excited & 37,240 & 58\% & 41\% \\
+Surprised & 18,322 & 47\% & 32\% \\
+Optimistic & 16,111 & 64\% & 36\% \\
+Amazed & 10,367 & 61\% & 35\% \\
+Ashamed & 10,066 & 63\% & 22\% \\
+Disgusted & 9,178 & 69\% & 17\% \\
+Pensive & 8,409 & 57\% & 34\% \\
+Interested & 5,606 & 63\% & 32\% \\
+    \bottomrule
+    \end{tabular}
+    
+    %\vspace{0.2cm}
+    
+    %\begin{tabular}{ccc}
+    %\toprule
+    %\multicolumn{3}{c}{Text statistics (nb of words)} \\
+    %\midrule
+    %Min & Mean & Max \\
+    %5 & 23 & 11310 \\
+    %\bottomrule
+    %\end{tabular}
+\end{center}
+\label{tumblrdata}
+\end{table}
 
 \section{Visual recognition}
-Pictures are valuable to accurately infer the emotion expressed by a user. For instance, happy photos might contain sunny landscapes while sad pictures might contain darker colors. To extract visual insights from images, we will use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks.
+Pictures are valuable to accurately infer the emotion expressed by a user. For instance, optimistic photos might contain vivid colors while sad pictures might contain darker colors. To extract visual insights from images, we will use convolutional neural networks, which achieve state-of-the-art performances in many visual recognition tasks.
 
 \subsection{Transfer learning}
-Training a convolutional network from scratch can be difficult as a large amount of data is needed and many different architectures need to be tested before achieving satisfying performances. To circumvent this issue, we can take advantage of the pre-trained network named Inception [cite] that learned to recognise images through the ImageNet dataset with a deep architecture of 22 layers.
+Training a convolutional network from scratch can be difficult as a large amount of data is needed and many different architectures need to be tested before achieving satisfying performances. To circumvent this issue, we can take advantage of the pre-trained network named Inception that learned to recognise images through the ImageNet dataset with a deep architecture of 22 layers.
 
-Inception learned representations capturing the colors and arrangement of shapes of an image, which turn out to be relevant when dealing with images even for a different task. We could also say that the pre-trained network grasped the underlying structure of images. This statement rests on the hypothesis that all images are in a low-dimensional manifold, and recent advances in realistic photos generation through generative adversarial networks bolsters this idea [cite Radford, Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks.]. 
+Inception learned representations capturing the colors and arrangement of shapes of an image, which turn out to be relevant when dealing with images even for a different task. We could also say that the pre-trained network grasped the underlying structure of images. This statement rests on the hypothesis that all images lie in a low-dimensional manifold, and recent advances in realistic photos generation through generative adversarial networks bolsters this idea \citep{Radford-16}. 
 
-More specifically, the Inception network learned to recognise features in a picture in order to classify the latter among the 1000 classes in the ImageNet dataset. Suppose that instead of classifying an image into 1000 classes we want to label it according to 6 different emotions (happy, sad, angry, scared, surprised, disgusted). The same features can be combined in a different way to let the network take a decision about what the emotion conveyed by the image is.
+More specifically, the Inception network learned to recognise features in a picture in order to classify the latter among the 1000 classes in the ImageNet dataset. Suppose that instead of classifying an image into 1000 classes we want to label it according to 16 different emotions, the same features can be combined in a different way to let the network take a decision about what the emotion conveyed by the image is.
 
 The process described above is called {\em Transfer Learning}: we chop off the last layer of the network and add our own layer given how many classes we have. We then freeze the weights of the other layers and only backpropagate through the newly created layer when training the network on our examples. If we have enough data, we can unfreeze more higher-level layers and backpropagate through them.
 
@@ -120,38 +157,37 @@ The process described above is called {\em Transfer Learning}: we chop off the l
 The Inception model was fed raw images, that were resized to a fixed size $(224, 224, 3)$, and fine-tuned with the following parameters:
 \begin{itemize}[topsep=0pt]
     \item 9,000 training steps
-    \item Mini-batch of size 32
-    \item Adam optimizer with a learning rate of $1\mathrm{e}{-6}$
+    \item Mini-batch of size 64
+    \item Adam optimizer with an initial learning rate of 0.001
+    \item Learning rate decay of 0.3 every epoch
 \end{itemize}
 
-After the preprocessing described in Section 2, the dataset contains 295,508 posts that we split as 80\% train set and 20\% test set. The metric used to evaluate the model is accuracy, which is the fraction of correctly classified images.
+After the preprocessing described in Section 2, the dataset contains 258,803 posts that we split as 80\% train set and 20\% validation set. The metric used to evaluate the model is accuracy, which is the fraction of correctly classified images.
 
-The fine-tuned Inception is compared to a baseline: random guessing that includes the prior probabilities of the classes: 
-\begin{table}[H]
-\caption{Prior probabilities of the classes}
-\begin{center}
-    \begin{tabular}{| c | c | c | c | c | c | c |}
-    \hline
-     & \textbf{happiness} & \textbf{sadness} &  \textbf{anger} & \textbf{surprise} & \textbf{fear} & \textbf{disgust} \\ \hline
-    \textbf{Prior proba.} & 0.32 & 0.22 & 0.19 & 0.03 & 0.22 & 0.02 \\
-    \hline
-    \end{tabular}
-\end{center} 
-\end{table}
+The fine-tuned Inception is compared to a baseline: random guessing that includes the prior probabilities of the classes. Table \ref{image-results} summarises the results of the image model.
+%\begin{table}[H]
+%\caption{Prior probabilities of the classes}
+%\begin{center}
+   % \begin{tabular}{| c | c | c | c | c | c | c |}
+    %\hline
+    % & \textbf{happiness} & \textbf{sadness} &  \textbf{anger} & \textbf{surprise} & \textbf{fear} & \textbf{disgust} \\ \hline
+    %\textbf{Prior proba.} & 0.32 & 0.22 & 0.19 & 0.03 & 0.22 & 0.02 \\
+    %\hline
+    %\end{tabular}
+%\end{center} 
+%\end{table}
 
-The results are:
 \begin{table}[H]
 \caption{Image model against random guessing}
 \begin{center}
-    \begin{tabular}{| l | c | c |}
-    \hline
-    & \textbf{Train} & \textbf{Test} \\
+    \begin{tabular}{ l | c | c}
+    & \textbf{Train} & \textbf{Validation} \\
     & \textbf{accuracy} & \textbf{accuracy} \\ \hline
-    \textbf{Random guessing} & 24\% & 24\% \\ \hline
-    \textbf{Inception fine-tuned}  & 48\% & 42\% \\
-    \hline
+    \textbf{Random guessing} & 11\% & 11\% \\ \hline
+    \textbf{Inception fine-tuned}  & 43\% & 36\% \\
     \end{tabular}
-\end{center} 
+\end{center}
+\label{image-results}
 \end{table}
 
 \section{Natural language processing}
@@ -169,49 +205,40 @@ It's unclear whether the user wants to convey happiness or surprise. Only after 
 \subsection{Word embedding}
 Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with words one-hot encoded as for instance `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That is exactly how word embedding works: every word is projected into a high-dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
 
-We will be using Word2Vec [elaborate]
+We will use the GloVe word embedding that resulted from training on Twitter data as the writing style between Tumblr and Twitter are rather similar.
 
-Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space [cite seth1]
+Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space \citep{Flaxman-15}.
 
 However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb. The order information can be preserved using Recurrent Neural Networks.
 
 \subsection{Sequence input}
-The text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM [cite]. To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words [discuss, mean number of words in a post?].
+The text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM \citep{Hochreiter-97}. To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words which is a reasonable choice as 76\% posts in the dataset contain less than 50 words.
 
 We now evaluate the performance of the text model described below:
 \begin{itemize}
-    \item Word embedding into a vector of dimension 300.
+    \item Word embedding into a vector of dimension 200.
     \item An LSTM layer of size 1024.
-    \item An output layer of size 6.
+    \item An output layer of size 16.
 \end{itemize}
 
 \subsection{Results}
-The network was trained with:
-\begin{itemize}[topsep=0pt]
-    \item 10,000 training steps
-    \item Mini-batch of size 128
-    \item Adam optimizer with an initial learning rate of 0.01
-    \item Learning rate decay of $\frac{1}{2}$ every 1000 steps
-    \item LSTM unrolled for 20 words
-    \item Gradient clipping with a maximum norm of 5.0
-\end{itemize}
+The network was trained with the same configuration as the image model and table \ref{text-results} shows the text model results.
 
 \begin{table}[H]
 \caption{Text model against random guessing}
 \begin{center}
-    \begin{tabular}{| l | c | c |}
-    \hline
-    & \textbf{Train} & \textbf{Test} \\
+    \begin{tabular}{l | c | c}
+    & \textbf{Train} & \textbf{Validation} \\
     & \textbf{accuracy} & \textbf{accuracy} \\ \hline
-    \textbf{Random guessing} & 24\% & 24\% \\ \hline
-    \textbf{LSTM model}  & 63\% & 61\% \\
-    \hline
+    \textbf{Random guessing} & 11\% & 11\% \\ \hline
+    \textbf{LSTM model}  & 72\% & 69\% \\
     \end{tabular}
-\end{center} 
+\end{center}
+\label{text-results}
 \end{table}
 
 \section{Deep Sentiment}
-Real-world information oftentimes comes in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect [cite mcgurk]. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if we know the actual sound is a /{\em ba}/, we cannot stop our brain from interpreting it as a /{\em da}/.
+Real-world information oftentimes comes in several modalities. For instance, in speech recognition, humans integrate audio and visual information to understand speech, as was demonstrated by the McGurk effect \citep{McGurk-76}. Separating what we see from what we hear seems like an easy task, but in an experiment conducted by McGurk, the subjects who were listening to a /{\em ba}/ sound with a visual /{\em ga}/ actually reported they were hearing a /{\em da}/. This is uncanny as even if we know the actual sound is a /{\em ba}/, we cannot stop our brain from interpreting it as a /{\em da}/.
 
 Likewise, an image almost always comes with a caption as different interpretations can arise when textual context is not provided, as shown in Figure \ref{ambiguous}:
 
@@ -247,116 +274,51 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
     layer.
     \item The text is embedded in a high-dimensional space with Word2Vec and is fed to an LSTM with 1024 neurons.
     \item The two outputs are concatenated and fed to a fully connected layer with 512 neurons. 
-    \item The final layer contains 6 neurons, one for each basic emotion.
+    \item The final layer contains 16 neurons, one for each basic emotion.
     \item Softmax is applied to the final layer to give the probability distribution of the emotional state of the user.
 \end{enumerate}
 
 \section{Results}
-Deep Sentiment was trained with:
-\begin{itemize}[topsep=0pt]
-    \item 10,000 training steps
-    \item Mini-batch size of 32
-    \item Adam optimizer with an initial learning rate of 0.001
-    \item Learning rate decay of $\frac{1}{2}$ every 1000 steps
-\end{itemize}
+Deep Sentiment was trained with the same configuration as before and figure \ref{train-validation} shows a comparison of the accuracy curves of the different models:
 
-This model combining text and image outperforms the algorithms only using those elements separately with 75\% train accuracy and 70\% test accuracy. This shows that just like a human being, a neural network needs both visual and textual information to determine the emotion conveyed by a post. The synergy between visual recognition and natural language processing is impressive as shown in the comparison table \ref{all-results}.
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \vskip 0pt %Necessary to align on image and not caption
+        \centering
+        \includegraphics[width=\linewidth]{Images/train.jpg}
+        \caption{Train curve}
+   \end{subfigure}
+   \begin{subfigure}[t]{.5\textwidth}
+       \vskip 0pt
+       \centering
+       \includegraphics[width=\linewidth]{Images/validation.jpg}
+       \caption{Validation curve}
+    \end{subfigure}
+    \caption{Accuracy curves}
+    \label{train-validation}
+\end{figure}
+
+
+
+This model combining text and image outperforms the algorithms only using those elements separately with 80\% train accuracy and 72\% validation accuracy. This shows that just like a human being, a neural network needs both visual and textual information to determine the emotion conveyed by a post. The synergy between visual recognition and natural language processing is impressive as shown in the comparison table \ref{all-results}.
 
 \begin{table}[H]
 \caption{Comparison of models}
 \begin{center}
-    \begin{tabular}{| l | c | c | c |}
-    \hline
-    & \textbf{Loss} & \textbf{Train} & \textbf{Test} \\
+    \begin{tabular}{ l | c | c | c}
+    & \textbf{Loss} & \textbf{Train} & \textbf{Validation} \\
     & & \textbf{accuracy} & \textbf{accuracy} \\ \hline
-    \textbf{Random guessing} & - & 24\% & 24\% \\ \hline
-    \textbf{Inception fine-tuned}  & 1.61 & 48\% & 42\% \\ \hline
-    \textbf{LSTM model} & 1.01 & 63\% & 61\% \\ \hline
-    \textbf{Deep Sentiment} & \textbf{0.80} & \textbf{75\%} & \textbf{70\%} \\
-    \hline
+    \textbf{Random guessing} & - & 11\% & 11\% \\ \hline
+    \textbf{Inception fine-tuned}  & 1.80 & 43\% & 36\% \\ \hline
+    \textbf{LSTM model} & 0.81 & 72\% & 69\% \\ \hline
+    \textbf{Deep Sentiment} & \textbf{0.75} & \textbf{80\%} & \textbf{72\%} \\
     \end{tabular}
 \end{center} 
 \label{all-results}
 \end{table}
 
-\section{Citations, figures, tables, references}
-\label{others}
-
-These instructions apply to everyone, regardless of the formatter being used.
-
-\subsection{Citations within the text}
-
-Citations within the text should be based on the \texttt{natbib} package
-and include the authors' last names and year (with the ``et~al.'' construct
-for more than two authors). When the authors or the publication are
-included in the sentence, the citation should not be in parenthesis (as
-in ``See \citet{Hinton06} for more information.''). Otherwise, the citation
-should be in parenthesis (as in ``Deep learning shows promise to make progress towards AI~\citep{Bengio+chapter2007}.'').
-
-The corresponding references are to be listed in alphabetical order of
-authors, in the \textsc{References} section. As to the format of the
-references themselves, any style is acceptable as long as it is used
-consistently.
-
-\subsection{Footnotes}
-
-Indicate footnotes with a number\footnote{Sample of the first footnote} in the
-text. Place the footnotes at the bottom of the page on which they appear.
-Precede the footnote with a horizontal rule of 2~inches
-(12~picas).\footnote{Sample of the second footnote}
-
-\subsection{Figures}
-
-All artwork must be neat, clean, and legible. Lines should be dark
-enough for purposes of reproduction; art work should not be
-hand-drawn. The figure number and caption always appear after the
-figure. Place one line space before the figure caption, and one line
-space after the figure. The figure caption is lower case (except for
-first word and proper nouns); figures are numbered consecutively.
-
-Make sure the figure caption does not get separated from the figure.
-Leave sufficient space to avoid splitting the figure and figure caption.
-
-You may use color figures.
-However, it is best for the
-figure captions and the paper body to make sense if the paper is printed
-either in black/white or in color.
-\begin{figure}[h]
-\begin{center}
-%\framebox[4.0in]{$\;$}
-\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-\end{center}
-\caption{Sample figure caption.}
-\end{figure}
-
-\subsection{Tables}
-
-All tables must be centered, neat, clean and legible. Do not use hand-drawn
-tables. The table number and title always appear before the table. See
-Table~\ref{sample-table}.
-
-Place one line space before the table title, one line space after the table
-title, and one line space after the table. The table title must be lower case
-(except for first word and proper nouns); tables are numbered consecutively.
-
-\begin{table}[t]
-\caption{Sample table title}
-\label{sample-table}
-\begin{center}
-\begin{tabular}{ll}
-\multicolumn{1}{c}{\bf PART}  &\multicolumn{1}{c}{\bf DESCRIPTION}
-\\ \hline \\
-Dendrite         &Input terminal \\
-Axon             &Output terminal \\
-Soma             &Cell body (contains cell nucleus) \\
-\end{tabular}
-\end{center}
-\end{table}
-
 \subsubsection*{Acknowledgments}
 
-Use unnumbered third level headings for the acknowledgments. All
-acknowledgments, including those to funding agencies, go at the end of the paper.
 
 \bibliography{iclr2018_conference}
 \bibliographystyle{iclr2018_conference}
