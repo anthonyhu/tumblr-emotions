@@ -153,14 +153,10 @@ More specifically, the Inception network learned to recognise features in a pict
 
 The process described above is called {\em Transfer Learning}: we chop off the last layer of the network and add our own layer given how many classes we have. We then freeze the weights of the other layers and only backpropagate through the newly created layer when training the network on our examples. If we have enough data, we can unfreeze more higher-level layers and backpropagate through them.
 
+[DERIVE MATHS]
+
 \subsection{Results}
-The Inception model was fed raw images, that were resized to a fixed size $(224, 224, 3)$, and fine-tuned with the following parameters:
-\begin{itemize}[topsep=0pt]
-    \item 9,000 training steps
-    \item Mini-batch of size 64
-    \item Adam optimizer with an initial learning rate of 0.001
-    \item Learning rate decay of 0.3 every epoch
-\end{itemize}
+The Inception model was fed raw images, that were resized to a fixed size $(224, 224, 3)$, and fine-tuned with a mini-batch of size 64, Adam optimizer with an initial learning rate of 0.001 and a learning rate decay of 0.3 every epoch.
 
 After the preprocessing described in Section 2, the dataset contains 258,803 posts that we split as 80\% train set and 20\% validation set. The metric used to evaluate the model is accuracy, which is the fraction of correctly classified images.
 
@@ -212,14 +208,26 @@ Each post in the dataset does not necessarily contain the same number of words. 
 However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb. The order information can be preserved using Recurrent Neural Networks.
 
 \subsection{Sequence input}
+Models of natural language using neural networks have proved to outperform the more traditional statistical models that were limited by the Markov assumption [cite]. One reason why is that the compact representation of words through word embedding is robust [cite Mikolov] and do no need any smoothing over probabilities. Among the neural models, the recurrent neural network based language model allows for short-term memory: similarly to how human read sentences, the past context is essential to understand the meaning of written language. Contrary to shallow feedforward networks, that can only cluster similar words, recurrent networks (which can be viewed as a deep architecture [cite Bengio]) can go as far as cluster similar histories. 
+
+[DERIVE MATH MODEL]
+
+Yoshua Bengio, Rejean Ducharme and Pascal Vincent. 2003.
+A neural probabilistic language model. Journal of Machine
+Learning Research, 3:1137-1155
+Joshua T. Goodman (2001). A bit of progress in language modeling,
+extended version. Technical report MSR-TR-2001-72.
+
+EXTENSIONS OF RECURRENT NEURAL NETWORK LANGUAGE MODEL Mikolov
+
+Y. Bengio, Y. LeCun. Scaling learning algorithms towards AI.
+In Large-Scale Kernel Machines, MIT Press, 2007.
+
+
 The text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM \citep{Hochreiter-97}. To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words which is a reasonable choice as 76\% posts in the dataset contain less than 50 words.
 
-We now evaluate the performance of the text model described below:
-\begin{itemize}
-    \item Word embedding into a vector of dimension 200.
-    \item An LSTM layer of size 1024.
-    \item An output layer of size 16.
-\end{itemize}
+The text model is: [graph with model]
+word embedding into a vector of dimension 200, an LSTM layer of size 1024, an output layer of size 16.
 
 \subsection{Results}
 The network was trained with the same configuration as the image model and table \ref{text-results} shows the text model results.
@@ -269,14 +277,8 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
     \label{deep-sentiment}
 \end{figure}
 
-\begin{enumerate}
-    \item The image go through the pre-trained Inception model that extracts features from the images: more precisely with 256 neurons in the last Inception 
-    layer.
-    \item The text is embedded in a high-dimensional space with Word2Vec and is fed to an LSTM with 1024 neurons.
-    \item The two outputs are concatenated and fed to a fully connected layer with 512 neurons. 
-    \item The final layer contains 16 neurons, one for each basic emotion.
-    \item Softmax is applied to the final layer to give the probability distribution of the emotional state of the user.
-\end{enumerate}
+On the one hand, the input image is fed to the Inception model that extracts visual features and on the other hand, the text is projected into a high-dimensional space that added semantic understanding of the words that could be effectively used in the recurrent layer to capture the meaning of the sentences.
+The two modalities are then concatenated and fed to a fully connected layer. The final softmax output layer give the probability distribution of the emotional state of the user.
 
 \section{Results}
 Deep Sentiment was trained with the same configuration as before and figure \ref{train-validation} shows a comparison of the accuracy curves of the different models:
@@ -317,8 +319,11 @@ This model combining text and image outperforms the algorithms only using those 
 \label{all-results}
 \end{table}
 
-\subsubsection*{Acknowledgments}
+[CORRELATION MATRIX + MATHS]
 
+Hierarchical clustering, why correlation is similar to L2 distance: https://stats.stackexchange.com/questions/165194/using-correlation-as-distance-metric-for-hierarchical-clustering
+
+\subsubsection*{Acknowledgments}
 
 \bibliography{iclr2018_conference}
 \bibliographystyle{iclr2018_conference}
