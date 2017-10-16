@@ -15,7 +15,7 @@ if slurm_parameter == 0:
 else:
 	mode = 'validation'
 
-model_type = 'image'
+model_type = 'image_text'
 
 if model_type == 'image':
 	checkpoint_dir = 'image_model/finetuned_image_model'

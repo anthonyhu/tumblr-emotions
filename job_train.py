@@ -18,7 +18,7 @@ if not tf.gfile.Exists(checkpoints_dir):
     download_pretrained_model(url, checkpoints_dir)
 
 num_steps = 30000
-model_type = 'image'
+model_type = 'image_text'
 
 if model_type == 'image':
 	train_dir = 'image_model/finetuned_image_model'
