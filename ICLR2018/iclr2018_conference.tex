@@ -44,7 +44,7 @@ Oxford, United Kingdom \\
 \maketitle
 
 \begin{abstract}
-We introduce a new large-scale multimodal dataset for sentiment analysis named TumblrData, that contains over 1 million labeled data with text, image and the associated emotion. TumblrData aims to provide a mean to evaluate machine learning models using visual and textual contents for sentiment analysis research.
+We introduce a new large-scale multimodal dataset for sentiment analysis named TumblrData, that contains over 1 million labeled data with text, image and the associated emotion, as a new mean of evaluation of machine learning models using visual and textual contents for sentiment analysis research.
 
 We propose a novel approach to sentiment analysis using deep neural networks combining visual recognition and natural language processing. Our approach leverages Tumblr posts containing images and text to predict the emotional state of users. Deep convolutional layers extract relevant features from images and high-dimensional word embedding followed by a recurrent layer process the textual information in order to infer the emotion conveyed by a given Tumblr post. We demonstrate that our network architecture, named Deep Sentiment, learns meaningful relations between visual data and language as it outperforms models using a single modality.% We then show that Deep Sentiment can also be adapted to generate images and text representative of an emotion. 
 \end{abstract}
@@ -57,8 +57,8 @@ Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing mo
 Also, we propose a novel method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the Tumblr tags, considered as the `self-reported' emotion of the user. Our model incorporates both text and image and we aim to `read' them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
 
 \begin{itemize}
-    \item We fine-tune a pre-trained Deep Convolutional Neural Network, named Inception \citep{Szegedy-15}, to our specific task of emotion inferring.
-    \item We project the text in a rich high-dimensional space with a word representation learned by GloVe \citep{Pennington-14} The word vectors then go through a Recurrent Neural Network which preserves the word order and captures the semantics of human language.
+    \item We fine-tune a pre-trained deep convolutional neural network, named Inception \citep{Szegedy-15}, to our specific task of emotion inferring.
+    \item We project the text in a rich high-dimensional space with a word representation learned by GloVe \citep{Pennington-14} The word vectors then go through a recurrent neural network which preserves the word order and captures the semantics of human language.
     \item A fully-connected layer combines the information in the two modalities and a final softmax output layer gives the probability distribution of the emotional state of the user.
 \end{itemize}
 
@@ -149,14 +149,10 @@ Training a convolutional network from scratch can be difficult as a large amount
 
 Inception learned representations capturing the colors and arrangement of shapes of an image, which turn out to be relevant when dealing with images even for a different task. We could also say that the pre-trained network grasped the underlying structure of images. This statement rests on the hypothesis that all images lie in a low-dimensional manifold, and recent advances in realistic photos generation through generative adversarial networks bolsters this idea \citep{Radford-16}. 
 
-More specifically, the Inception network learned to recognise features in a picture in order to classify the latter among the 1000 classes in the ImageNet dataset. Suppose that instead of classifying an image into 1000 classes we want to label it according to 16 different emotions, the same features can be combined in a different way to let the network take a decision about what the emotion conveyed by the image is.
-
-The process described above is called {\em Transfer Learning}: we chop off the last layer of the network and add our own layer given how many classes we have. We then freeze the weights of the other layers and only backpropagate through the newly created layer when training the network on our examples. If we have enough data, we can unfreeze more higher-level layers and backpropagate through them.
-
-[DERIVE MATHS]
+More specifically, the Inception network learned to recognise features in a picture in order to classify the latter among the 1000 classes in the ImageNet dataset. Suppose that instead of classifying an image into 1000 classes we want to label it according to 16 different emotions, the same features can be combined in a different way to let the network take a decision about what the emotion conveyed by the image is. The process described above is called {\em Transfer Learning}: we chop off the last layer of the network and add our own layer given how many classes we have.
 
 \subsection{Results}
-The Inception model was fed raw images, that were resized to a fixed size $(224, 224, 3)$, and fine-tuned with a mini-batch of size 64, Adam optimizer with an initial learning rate of 0.001 and a learning rate decay of 0.3 every epoch.
+The Inception model was fed raw images, that were resized to a fixed size $(224, 224, 3)$, and fine-tuned through the last Inception module \citep{Szegedy-15} with a mini-batch of size 64, Adam optimizer with an initial learning rate of 0.001 and a learning rate decay of 0.3 every epoch.
 
 After the preprocessing described in Section 2, the dataset contains 258,803 posts that we split as 80\% train set and 20\% validation set. The metric used to evaluate the model is accuracy, which is the fraction of correctly classified images.
 
@@ -199,38 +195,25 @@ Even as a human being, it can be difficult to guess the expressed emotion only b
 It's unclear whether the user wants to convey happiness or surprise. Only after reading the text ``To who ever left this on my windshield outside of last nights art opening, I love you. You made my night.", we can finally conclude that the person was {\em surprised}. The text is extremely informative and is usually crucial to accurately infer the emotional state.
 
 \subsection{Word embedding}
-Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with words one-hot encoded as for instance `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. That is exactly how word embedding works: every word is projected into a high-dimensional space that preserves semantic relationships. Therefore, what the model has learned about dogs can be used when faced with a cat.
-
-We will use the GloVe word embedding that resulted from training on Twitter data as the writing style between Tumblr and Twitter are rather similar.
+Most learning algorithms rely on the local smoothness hypothesis, that is, similar training instances are spatially close. This hypothesis clearly doesn't hold with words one-hot encoded as for instance `dog' is as close to `tree' as it is to `cat'. Ideally, we would like to transform the word `dog' in a space so that it's closer to `cat' than it is to `tree'. Word embedding produces a mapping so that words are projected into a high-dimensional space that preserves semantic relationships. We will use the GloVe word embedding that resulted from training on Twitter data as the writing style between Tumblr and Twitter are rather similar.
 
 Each post in the dataset does not necessarily contain the same number of words. Even after embedding each word, the input will be of variable size and most learning algorithm expect a fixed-sized input. To solve that problem, we can simply average across the number of words. The information loss is still minimal as the features come from a high-dimensional space \citep{Flaxman-15}.
 
-However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb. The order information can be preserved using Recurrent Neural Networks.
+However note that the word order is completely lost. Human language relies on the word order to communicate as for example the word {\em change} can be both a noun and a verb, and negation such as `not entertained' can only be understood if `not' directly precedes the verb. The order information can be preserved using recurrent neural networks.
 
 \subsection{Sequence input}
-Models of natural language using neural networks have proved to outperform the more traditional statistical models that were limited by the Markov assumption [cite]. One reason why is that the compact representation of words through word embedding is robust [cite Mikolov] and do no need any smoothing over probabilities. Among the neural models, the recurrent neural network based language model allows for short-term memory: similarly to how human read sentences, the past context is essential to understand the meaning of written language. Contrary to shallow feedforward networks, that can only cluster similar words, recurrent networks (which can be viewed as a deep architecture [cite Bengio]) can go as far as cluster similar histories. 
+Models of natural language using neural networks have proved to outperform the more traditional statistical models that were limited by the Markov assumption (\citet{Bengio-03} and \citet{Goodman-01}). One reason why is that the compact representation of words through word embedding is robust \citep{Mikolov-11} and do no need any smoothing over probabilities. Among the neural models, the recurrent neural network based language model allows for short-term memory: similarly to how human read sentences, the past context is essential to understand the meaning of written language. Contrary to shallow feedforward networks, that can only cluster similar words, recurrent networks (which can be viewed as a deep architecture \citep{Bengio-07}) can go as far as cluster similar histories. 
 
-[DERIVE MATH MODEL]
+Recurrent neural networks have a temporal awareness represented by the hidden state that can be seen as an embedding of the past words. For example in [cite Sutskever et al. 2014] a quality translation of a sentence was made possible with the last output of a recurrent neural network. However, when given long sequence vectors, it is increasingly difficult for the recurrent neural network to handle long-range dependencies, even for architectures that were created to overcome this problem such as Long Short-Term Memory \citep{Hochreiter-97}.
 
-Yoshua Bengio, Rejean Ducharme and Pascal Vincent. 2003.
-A neural probabilistic language model. Journal of Machine
-Learning Research, 3:1137-1155
-Joshua T. Goodman (2001). A bit of progress in language modeling,
-extended version. Technical report MSR-TR-2001-72.
+Inspired by the human visual attention mechanism \citep{Fischer-87} that allow us to focus on certain region of an image with high resolution while seeing the rest of the image in low resolution, attention mechanisms \citep{Bahdanau-15} prevent the vanishing long-range dependencies with a weighting mechanism.
 
-EXTENSIONS OF RECURRENT NEURAL NETWORK LANGUAGE MODEL Mikolov
+[Still need to implement attention mechanisms]
 
-Y. Bengio, Y. LeCun. Scaling learning algorithms towards AI.
-In Large-Scale Kernel Machines, MIT Press, 2007.
-
-
-The text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM \citep{Hochreiter-97}. To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words which is a reasonable choice as 76\% posts in the dataset contain less than 50 words.
-
-The text model is: [graph with model]
-word embedding into a vector of dimension 200, an LSTM layer of size 1024, an output layer of size 16.
+More concretely, the text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM . To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words which is a reasonable choice as 76\% posts in the dataset contain less than 50 words.
 
 \subsection{Results}
-The network was trained with the same configuration as the image model and table \ref{text-results} shows the text model results.
+The network [for now, word embedding into a vector of dimension 200, an LSTM layer of size 1024, an output layer of size 16] was trained with the same configuration as the image model and table \ref{text-results} shows the text model results.
 
 \begin{table}[H]
 \caption{Text model against random guessing}
@@ -272,16 +255,15 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{Images/deep-sentiment.png}
-    \caption{Deep Sentiment architecture}
+    \includegraphics[width=0.6\textwidth]{Images/deep-sentiment-structure.jpg}
+    \caption{The Deep Sentiment structure. On the one hand, the input image, resized to (224,224,3) is fed into the Inception network and outputs a vector of size 256. On the other hand, the text is projected into a high-dimensional space that subsequently goes through an LSTM layer with 1024 units. The two modalities are then concatenated and fed into a fully connected layer. The final softmax output layer give the probability distribution of the emotional state of the user.}
     \label{deep-sentiment}
 \end{figure}
 
-On the one hand, the input image is fed to the Inception model that extracts visual features and on the other hand, the text is projected into a high-dimensional space that added semantic understanding of the words that could be effectively used in the recurrent layer to capture the meaning of the sentences.
-The two modalities are then concatenated and fed to a fully connected layer. The final softmax output layer give the probability distribution of the emotional state of the user.
-
 \section{Results}
 Deep Sentiment was trained with the same configuration as before and figure \ref{train-validation} shows a comparison of the accuracy curves of the different models:
+
+[Would like to use different learning rates for image and text. Also try bayesian hyperparameters optimisation]
 
 \begin{figure}[H]
     \begin{subfigure}[t]{.5\textwidth}
@@ -300,9 +282,9 @@ Deep Sentiment was trained with the same configuration as before and figure \ref
     \label{train-validation}
 \end{figure}
 
-
-
 This model combining text and image outperforms the algorithms only using those elements separately with 80\% train accuracy and 72\% validation accuracy. This shows that just like a human being, a neural network needs both visual and textual information to determine the emotion conveyed by a post. The synergy between visual recognition and natural language processing is impressive as shown in the comparison table \ref{all-results}.
+
+[Compute saliency maps on image and text as a sanity check: the network is looking at relevant words and objects to predict emotions]
 
 \begin{table}[H]
 \caption{Comparison of models}
@@ -319,9 +301,21 @@ This model combining text and image outperforms the algorithms only using those 
 \label{all-results}
 \end{table}
 
-[CORRELATION MATRIX + MATHS]
+Given an image $\mathcal{I}$ and text $\mathcal{T}$, Deep Sentiment computes the conditional probabilities of the classes given the input image and input text. The outputs $(y_i)_{i=1}^n \in [0,1]^{16}$ are sampled from the distribution $Y| I, T$ where $I$ is the distribution of images $\mathcal{I}$ and $T$ the distribution of text $\mathcal{T}$. Using $(y_i)_{i=1}^n$, the empirical correlation matrix of the different emotions can be computed. Correlations is a measure of similarity and as such the correlations can be used as a distance matrix to obtain ahierarchical clustering of the emotions as shown in figure \ref{dendrogram}.
 
-Hierarchical clustering, why correlation is similar to L2 distance: https://stats.stackexchange.com/questions/165194/using-correlation-as-distance-metric-for-hierarchical-clustering
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/dendrogram.jpg}
+    \caption{Hierarchically-clustered heatmap of the emotion correlation matrix}
+    \label{dendrogram}
+\end{figure}
+
+There is a clear distinction between emotions that can be deemed as \textbf{positive} such as: `excited', `happy', `love', `optimistic' and \textbf{negative}: `scared', `angry', `ashamed', `annoyed', `disgusted'. In between lies ambivalent feelings such as `surprised' or `amazed'. The hierarchical clustering formed relevant clusters such as `happy' and `love', `calm' and `pensive' or `amazed' and `surprised'.
+
+[Just computed this matrix, obviously need to analyse it more thoroughly.]
+[Would like to know the proportion of misclassified examples that fall within emotions that are clustered in a distance of 1, then distance of 2 etc. Hopefully most mistakes come from clusters of distance 1.]
+
+
 
 \subsubsection*{Acknowledgments}
 
