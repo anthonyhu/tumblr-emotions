@@ -40,11 +40,10 @@ Oxford, United Kingdom \\
 
 \begin{document}
 
-
 \maketitle
 
 \begin{abstract}
-We introduce a new large-scale multimodal dataset for sentiment analysis named TumblrData, that contains over 1 million labeled data with text, image and the associated emotion, as a new mean of evaluation of machine learning models using visual and textual contents for sentiment analysis research.
+We introduce a new large-scale multimodal dataset for sentiment analysis named TumblrData, that contains over 1 million labeled data with text, image and the associated emotion, as a new mean to evaluate machine learning models using visual and textual contents for sentiment analysis research.
 
 We propose a novel approach to sentiment analysis using deep neural networks combining visual recognition and natural language processing. Our approach leverages Tumblr posts containing images and text to predict the emotional state of users. Deep convolutional layers extract relevant features from images and high-dimensional word embedding followed by a recurrent layer process the textual information in order to infer the emotion conveyed by a given Tumblr post. We demonstrate that our network architecture, named Deep Sentiment, learns meaningful relations between visual data and language as it outperforms models using a single modality.% We then show that Deep Sentiment can also be adapted to generate images and text representative of an emotion. 
 \end{abstract}
@@ -52,9 +51,9 @@ We propose a novel approach to sentiment analysis using deep neural networks com
 \section{Introduction}
 Sentiment analysis has been an active area of research in the past few years, especially on the readily available Twitter data, e.g. \citet{Bollen} who investigated the impact of collective mood states on stock market or \cite{Flaxman-16} who analysed day-of-week population well-being.
 
-Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing more expressiveness, and are not focused on the textual content but on the visual content. A Tumblr post will almost always be an image with some text accompanying the latter. Pictures have become prevalent on social media and characterising them could enable the understanding of billions of users. Unfortunately, there is no large publicly available dataset for multimodal sentiment analysis. This paper provides a new dataset, TumblrData \footnote{\texttt{https://github.com/anthonyhu/tumblr-sentiment}}, that will allow the research community to learn multimodal feature representations of emotions.
+Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing more expressiveness, and are not focused on the textual content but on the visual content. A Tumblr post will almost always be an image with some text accompanying the latter. Pictures have become prevalent on social media and characterising them could enable the understanding of billions of users. Unfortunately, there is no large publicly available dataset for multimodal sentiment analysis. This paper provides a new dataset, TumblrData \footnote{\texttt{https://github.com/anthonyhu/tumblr-sentiment}}, that will allow the research community to learn multimodal features representation of emotions.
 
-Also, we propose a novel method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the Tumblr tags, considered as the `self-reported' emotion of the user. Our model incorporates both text and image and we aim to `read' them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
+Also, we propose a method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the Tumblr tags, considered as the `self-reported' emotion of the user. Our model incorporates both text and image and we aim to `read' them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
 
 \begin{itemize}
     \item We fine-tune a pre-trained deep convolutional neural network, named Inception \citep{Szegedy-15}, to our specific task of emotion inferring.
@@ -149,7 +148,7 @@ Training a convolutional network from scratch can be difficult as a large amount
 
 Inception learned representations capturing the colors and arrangement of shapes of an image, which turn out to be relevant when dealing with images even for a different task. We could also say that the pre-trained network grasped the underlying structure of images. This statement rests on the hypothesis that all images lie in a low-dimensional manifold, and recent advances in realistic photos generation through generative adversarial networks bolsters this idea \citep{Radford-16}. 
 
-More specifically, the Inception network learned to recognise features in a picture in order to classify the latter among the 1000 classes in the ImageNet dataset. Suppose that instead of classifying an image into 1000 classes we want to label it according to 16 different emotions, the same features can be combined in a different way to let the network take a decision about what the emotion conveyed by the image is. The process described above is called {\em Transfer Learning}: we chop off the last layer of the network and add our own layer given how many classes we have.
+More specifically, the Inception network learned to recognise features in a picture in order to classify the latter among the 1000 classes in the ImageNet dataset. Suppose that instead of classifying an image into 1000 classes we want to label it according to 16 different emotions, the same features can be combined in a different way to let the network take a decision about what the emotion conveyed by the image is. The process described above is called Transfer Learning.
 
 \subsection{Results}
 The Inception model was fed raw images, that were resized to a fixed size $(224, 224, 3)$, and fine-tuned through the last Inception module \citep{Szegedy-15} with a mini-batch of size 64, Adam optimizer with an initial learning rate of 0.001 and a learning rate decay of 0.3 every epoch.
@@ -204,13 +203,13 @@ However note that the word order is completely lost. Human language relies on th
 \subsection{Sequence input}
 Models of natural language using neural networks have proved to outperform the more traditional statistical models that were limited by the Markov assumption (\citet{Bengio-03} and \citet{Goodman-01}). One reason why is that the compact representation of words through word embedding is robust \citep{Mikolov-11} and do no need any smoothing over probabilities. Among the neural models, the recurrent neural network based language model allows for short-term memory: similarly to how human read sentences, the past context is essential to understand the meaning of written language. Contrary to shallow feedforward networks, that can only cluster similar words, recurrent networks (which can be viewed as a deep architecture \citep{Bengio-07}) can go as far as cluster similar histories. 
 
-Recurrent neural networks have a temporal awareness represented by the hidden state that can be seen as an embedding of the past words. For example in [cite Sutskever et al. 2014] a quality translation of a sentence was made possible with the last output of a recurrent neural network. However, when given long sequence vectors, it is increasingly difficult for the recurrent neural network to handle long-range dependencies, even for architectures that were created to overcome this problem such as Long Short-Term Memory \citep{Hochreiter-97}.
+Recurrent neural networks have a temporal awareness represented by the hidden state that can be seen as an embedding of the past words. For example in \citet{Sutskever-14} a quality translation of a sentence was made possible with the last output of a recurrent neural network. However, when given long sequence vectors, it is increasingly difficult for the recurrent neural network to handle long-range dependencies, even for architectures that were created to overcome this problem such as Long Short-Term Memory \citep{Hochreiter-97}.
 
 Inspired by the human visual attention mechanism \citep{Fischer-87} that allow us to focus on certain region of an image with high resolution while seeing the rest of the image in low resolution, attention mechanisms \citep{Bahdanau-15} prevent the vanishing long-range dependencies with a weighting mechanism.
 
 [Still need to implement attention mechanisms]
 
-More concretely, the text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM . To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words which is a reasonable choice as 76\% posts in the dataset contain less than 50 words.
+More concretely, the text is broken down into a sequence of words that are embed in a high-dimensional space (unknown words are transformed to a zero vector) and then fed to an LSTM . To account for shorter posts, we zero-pad the vector with a special word token. For longer posts, we only keep the 50 first words which is a reasonable choice as 76\% posts in the dataset contain less than 50 words. [Need to find a better reason to warrant the 50 words maybe]
 
 \subsection{Results}
 The network [for now, word embedding into a vector of dimension 200, an LSTM layer of size 1024, an output layer of size 16] was trained with the same configuration as the image model and table \ref{text-results} shows the text model results.
@@ -301,7 +300,7 @@ This model combining text and image outperforms the algorithms only using those 
 \label{all-results}
 \end{table}
 
-Given an image $\mathcal{I}$ and text $\mathcal{T}$, Deep Sentiment computes the conditional probabilities of the classes given the input image and input text. The outputs $(y_i)_{i=1}^n \in [0,1]^{16}$ are sampled from the distribution $Y| I, T$ where $I$ is the distribution of images $\mathcal{I}$ and $T$ the distribution of text $\mathcal{T}$. Using $(y_i)_{i=1}^n$, the empirical correlation matrix of the different emotions can be computed. Correlations is a measure of similarity and as such the correlations can be used as a distance matrix to obtain ahierarchical clustering of the emotions as shown in figure \ref{dendrogram}.
+Given an image $\mathcal{I}$ and text $\mathcal{T}$, Deep Sentiment computes the conditional probabilities of the classes given the input image and input text: $P(y | \mathcal{I}, \mathcal{T})$. The outputs $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n \in [0,1]^{16}$ are sampled from the distribution $Y| I, T$ where $I$ is the distribution of images $\mathcal{I}$ and $T$ the distribution of text $\mathcal{T}$. Using $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n$, the empirical correlation matrix of the different emotions can be computed. Correlations is a measure of similarity and as such the correlations can be used as a distance matrix to obtain ahierarchical clustering of the emotions as shown in figure \ref{dendrogram}.
 
 \begin{figure}[H]
     \centering
@@ -310,11 +309,35 @@ Given an image $\mathcal{I}$ and text $\mathcal{T}$, Deep Sentiment computes the
     \label{dendrogram}
 \end{figure}
 
-There is a clear distinction between emotions that can be deemed as \textbf{positive} such as: `excited', `happy', `love', `optimistic' and \textbf{negative}: `scared', `angry', `ashamed', `annoyed', `disgusted'. In between lies ambivalent feelings such as `surprised' or `amazed'. The hierarchical clustering formed relevant clusters such as `happy' and `love', `calm' and `pensive' or `amazed' and `surprised'.
+There is a clear distinction between emotions that can be deemed as \textbf{positive} such as: `excited', `happy', `love', `optimistic' and \textbf{negative}: `scared', `angry', `ashamed', `annoyed', `disgusted'. In between lies ambivalent feelings such as `surprised' or `amazed'. Note that the hierarchical clustering formed relevant first-level clusters such as `happy' and `love', `calm' and `pensive' or `amazed' and `surprised'.
 
-[Just computed this matrix, obviously need to analyse it more thoroughly.]
-[Would like to know the proportion of misclassified examples that fall within emotions that are clustered in a distance of 1, then distance of 2 etc. Hopefully most mistakes come from clusters of distance 1.]
+Top words for each emotion. We artificially created posts the following way: the text consisted of only one of the most frequent 1,000 words in the whole dataset such as 'song'  and the associated image was the mean image. For each emotion, we reported the 10 highest scoring words from those 1,000 artificial posts in table \ref{top-words}.
 
+\begin{table}[H]
+\caption{Top words for each emotion}
+\begin{center}
+    \begin{tabular}{ l | l}
+    Emotion & Top words\\
+    \hline
+    \textbf{Amazed} & surprised, excited, amazing, woke, realized, awesome, happening, ashamed, yeah, happened\\
+    \textbf{Angry} & anger, fear, panic, annoying, hate, mad, upset, anxiety, scares, stupid\\
+    \textbf{Annoyed} & pissed, ashamed, angry, nervous, speak, surprised, tired, worried, ignore, phone\\
+    \textbf{Ashamed} & totally, honestly, sorry, absolutely, freaking, honest, completely, stupid, seriously, am\\
+    \textbf{Bored} & asleep, tired, kinda, busy, stuck, constantly, lonely, sat, listening, depression\\
+    \textbf{Calm} & quiet, situation, peace, mood, towards, warm, slowly, stay, sleep, rain\\
+    \textbf{Disgusted} & ashamed, totally, angry, hate, stupid, annoyed, horrible, scares, freaking, absolutely\\
+    \textbf{Excited} & tonight, hopefully, watching, nervous, surprised, expect, tomorrow, amazing, hoping, happen\\
+    \textbf{Happy} & healthy, loving, enjoy, wonderful, warm, happiness, smile, lovely, cute, proud\\
+    \textbf{Love} & soul, dreams, happiness, kiss, sex, beauty, women, feelings, god, relationships \\
+    \textbf{Optimistic} & positive, expect, surprised, healthy, grow, realize, clearly, hopefully, calm, peace\\
+    \textbf{Pensive} & mood, wrote, quiet, view, sadness, thoughts, calm, words, sad, kissed\\
+    \textbf{Sad} & horrible, sorry, crying, hurts, tears, cried, lonely, memories, worst, pain\\
+    \textbf{Scared} & terrified, scary, panic, nervous, fear, afraid, horrible, woke, happening, worried\\
+    \textbf{Surprised} & birthday, cried, thank, yesterday, told, sorry, amazing, sweet, friend,  message\\
+    \end{tabular}
+\end{center} 
+\label{top-words}
+\end{table}
 
 
 \subsubsection*{Acknowledgments}
