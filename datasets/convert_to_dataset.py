@@ -154,6 +154,10 @@ def get_split_with_text(split_name, dataset_dir, photos_subdir='photos', tfrecor
           [_POST_SIZE], tf.int64, default_value=tf.zeros([_POST_SIZE], dtype=tf.int64)),
       'seq_len': tf.FixedLenFeature(
           [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
+      'post_id': tf.FixedLenFeature(
+          [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
+      'day': tf.FixedLenFeature(
+          [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
   }
 
   items_to_handlers = {
@@ -161,6 +165,8 @@ def get_split_with_text(split_name, dataset_dir, photos_subdir='photos', tfrecor
       'text': slim.tfexample_decoder.Tensor('text'),
       'seq_len': slim.tfexample_decoder.Tensor('seq_len'),
       'label': slim.tfexample_decoder.Tensor('image/class/label'),
+      'post_id': slim.tfexample_decoder.Tensor('post_id'),
+      'day': slim.tfexample_decoder.Tensor('day'),
   }
 
   decoder = slim.tfexample_decoder.TFExampleDecoder(

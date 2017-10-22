@@ -33,6 +33,7 @@ import numpy as np
 import tensorflow as tf
 
 from scipy.misc import imread, imresize
+from datetime import datetime
 from slim.nets import inception
 from datasets import dataset_utils
 from text_model.text_preprocessing import preprocess_one_df
@@ -202,11 +203,14 @@ def _convert_dataset_with_text(split_name, filenames, class_names_to_ids, datase
             index = (int)(os.path.splitext(base)[0])
             text_data = df_dict[class_name].iloc[index]['text_list']
             seq_len = df_dict[class_name].iloc[index]['text_len']
+            post_id = df_dict[class_name].iloc[index]['id']
+            date = df_dict[class_name].iloc[index]['date']
+            day = datetime.strptime(date, '%Y-%m-%d %H:%M:%S GMT').weekday()
             # Convert to str, as only strings are accepted by tfexample
             #text_data = text_data.encode('ascii', 'ignore')
 
             example = dataset_utils.image_to_tfexample_with_text(
-                image_data, b'jpg', height, width, text_data, seq_len, class_id)
+                image_data, b'jpg', height, width, text_data, seq_len, class_id, post_id, day)
             tfrecord_writer.write(example.SerializeToString())
 
   sys.stdout.write('\n')

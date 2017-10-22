@@ -54,7 +54,8 @@ class DeepSentiment():
 
         self.dataset = get_split_with_text(mode, dataset_dir)
         image_size = inception_v1.default_image_size
-        images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
+        images, _, texts, seq_lens, self.labels, self.post_ids, self.days = load_batch_with_text(self.dataset, batch_size, 
+            height=image_size, width=image_size)
             
         # Create the model, use the default arg scope to configure the batch norm parameters.
         is_training = (mode == 'train')
@@ -116,7 +117,8 @@ class DeepSentiment2():
 
         self.dataset = get_split_with_text(mode, dataset_dir)
         image_size = inception_v1.default_image_size
-        images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
+        images, _, texts, seq_lens, self.labels, self.post_ids, self.days = load_batch_with_text(self.dataset, batch_size, 
+            height=image_size, width=image_size)
             
         # Create the model, use the default arg scope to configure the batch norm parameters.
         is_training = (mode == 'train')
@@ -548,7 +550,7 @@ def word_most_relevant(top_words, num_classes, checkpoint_dir):
     return scores, vocabulary, word_to_id
 
 
-def outliers_detection(nb_batches, checkpoint_dir):
+def outliers_detection(checkpoint_dir):
     """Find outliers using Euclidean distance in the last dense layer.
     
     Parameters:
@@ -570,18 +572,31 @@ def outliers_detection(nb_batches, checkpoint_dir):
             master='',
             config=None)
 
-        posts_logits = []
-        posts_labels = []
+        im_features_size = config['im_features_size']
+        rnn_size = config['rnn_size']
+        dense_mean = np.zeros((im_features_size + rnn_size))
         with monitored_session.MonitoredSession( # Generate queue
             session_creator=session_creator, hooks=None) as session:
+            batch_size = config['batch_size']
+            nb_batches = 100#model.dataset.num_samples / batch_size
             for i in range(nb_batches):
-                np_logits, np_labels = session.run([model.logits, model.labels])
-                posts_logits.append(np_logits)
-                posts_labels.append(np_labels)
+                current_dense = session.run(model.concat_features)
+                weight = float(i) * batch_size / ((i+1) * batch_size)
+                dense_mean = weight * dense_mean + (1-weight) * current_dense.mean(axis=0)
 
-    posts_logits, posts_labels = np.vstack(posts_logits), np.hstack(posts_labels)
-    np.save('data/posts_logits.npy', posts_logits)
-    np.save('data/posts_labels.npy', posts_labels)
-    return posts_logits, posts_labels
+            # Now look at outliers
+            max_norms = np.zeros((batch_size))
+            max_post_ids = np.zeros((batch_size))
+            for i in range(nb_batches):
+                current_dense, np_post_ids = session.run([model.concat_features, model.post_ids])
+                current_diff = np.linalg.norm(current_dense - dense_mean, axis=1)
+                for k in range(batch_size):
+                    if current_diff[k] > max_norms[k]:
+                        max_norms[k] = current_diff[k]
+                        max_post_ids[k] = np_post_ids[k]
+            
+    np.save('data/max_norms.npy', max_norms)
+    np.save('data/max_post_ids.npy', max_post_ids)
+    return max_norms, max_post_ids
 
         
