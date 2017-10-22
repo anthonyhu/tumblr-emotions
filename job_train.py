@@ -27,7 +27,7 @@ elif model_type == 'text':
 	train_dir = 'text_model/trained_text_model'
 	train_text_model(train_dir, num_steps)
 elif model_type == 'image_text':
-	train_dir = 'image_text_model/deep_sentiment_model'
+	train_dir = 'image_text_model/deep_sentiment_model_2'
 	train_deep_sentiment(checkpoints_dir, train_dir, num_steps)
 
 # Save output and parameters to text file in the localhost node, which is where the computation is performed.

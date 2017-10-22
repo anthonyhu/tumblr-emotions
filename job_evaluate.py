@@ -26,8 +26,8 @@ elif model_type == 'text':
 	log_dir = 'text_model/text_model_eval'
 	evaluate_text_model(checkpoint_dir, log_dir, mode, num_evals)
 elif model_type == 'image_text':
-	checkpoint_dir = 'image_text_model/deep_sentiment_model'
-	log_dir = 'image_text_model/model_eval'
+	checkpoint_dir = 'image_text_model/deep_sentiment_model_2'
+	log_dir = 'image_text_model/model_eval_2'
 	evaluate_deep_sentiment(checkpoint_dir, log_dir, mode, num_evals)
 
 # Save output and parameters to text file in the localhost node, which is where the computation is performed.

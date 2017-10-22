@@ -99,7 +99,7 @@ def _paragraph_to_ids(paragraph, word_to_id, post_size, emotions):
     words_len = len(words)
     if words_len > post_size:
         words = words[:post_size]
-        #words_len = post_size
+        words_len = post_size
     else:
         words = words + [vocab_size] * (post_size - words_len)
     return words, words_len

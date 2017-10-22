@@ -29,7 +29,8 @@ _CONFIG = {'mode': 'train',
            'batch_size': 64,
            'im_features_size': 256,
            'rnn_size': 1024,
-           'final_endpoint': 'Mixed_5c'}
+           'final_endpoint': 'Mixed_5c',
+           'fc_size': 512}
 
 class DeepSentiment():
     def __init__(self, config):
@@ -105,6 +106,7 @@ class DeepSentiment2():
         im_features_size = config['im_features_size']
         rnn_size = config['rnn_size']
         final_endpoint = config['final_endpoint']
+        fc_size = config['fc_size']
 
         tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -149,9 +151,15 @@ class DeepSentiment2():
         # Concatenate image and text features
         self.concat_features = tf.concat([images_features, texts_features], axis=1)
 
-        W_softmax = tf.get_variable('W_softmax', [im_features_size + rnn_size, self.nb_emotions])
+        # Dense layer
+        W_fc = tf.get_variable('W_fc', [im_features_size + rnn_size, fc_size])
+        b_fc = tf.get_variable('b_fc', [fc_size])
+        dense_layer = tf.matmul(self.concat_features, W_fc) + b_fc
+        dense_layer_relu = tf.nn.relu(dense_layer)
+
+        W_softmax = tf.get_variable('W_softmax', [fc_size, self.nb_emotions])
         b_softmax = tf.get_variable('b_softmax', [self.nb_emotions])
-        self.logits = tf.matmul(self.concat_features, W_softmax) + b_softmax
+        self.logits = tf.matmul(dense_layer_relu, W_softmax) + b_softmax
 
 def train_deep_sentiment(checkpoints_dir, train_dir, num_steps):
     """Fine tune the inception model, retraining the last layer.
@@ -168,7 +176,7 @@ def train_deep_sentiment(checkpoints_dir, train_dir, num_steps):
     tf.gfile.MakeDirs(train_dir)
 
     with tf.Graph().as_default():
-        model = DeepSentiment(_CONFIG)
+        model = DeepSentiment2(_CONFIG)
         # Specify the loss function:
         one_hot_labels = slim.one_hot_encoding(model.labels, model.nb_emotions)
         slim.losses.softmax_cross_entropy(model.logits, one_hot_labels)
@@ -240,7 +248,7 @@ def evaluate_deep_sentiment(checkpoint_dir, log_dir, mode, num_evals):
     with tf.Graph().as_default():
         config = _CONFIG.copy()
         config['mode'] = mode
-        model = DeepSentiment(config)
+        model = DeepSentiment2(config)
 
         # Accuracy metrics
         accuracy = slim.metrics.streaming_accuracy(tf.cast(model.labels, tf.int32),
