@@ -43,17 +43,19 @@ Oxford, United Kingdom \\
 \maketitle
 
 \begin{abstract}
-We introduce a new large-scale multimodal dataset for sentiment analysis named TumblrData, that contains over 1 million labeled data with text, image and the associated emotion, as a new mean to evaluate machine learning models using visual and textual contents for sentiment analysis research.
-
-We propose a novel approach to sentiment analysis using deep neural networks combining visual recognition and natural language processing. Our approach leverages Tumblr posts containing images and text to predict the emotional state of users. Deep convolutional layers extract relevant features from images and high-dimensional word embedding followed by a recurrent layer process the textual information in order to infer the emotion conveyed by a given Tumblr post. We demonstrate that our network architecture, named Deep Sentiment, learns meaningful relations between visual data and language as it outperforms models using a single modality.% We then show that Deep Sentiment can also be adapted to generate images and text representative of an emotion. 
+We propose a novel approach to sentiment analysis using deep neural networks combining visual recognition and natural language processing. %Deep convolutional layers extract relevant features from images and high-dimensional word embedding followed by a recurrent layer process the textual information in order to infer the emotion conveyed by a given Tumblr post.
+We show that our model can predict emotion based on text and images using Tumblr posts -- this is different than predicting whether a sentence expresses positive or negative sentiment; instead, it is inferring the latent emotional state of the person who wrote the Tumblr post.
+We demonstrate that our network architecture, named Deep Sentiment, learns meaningful relations between visual data and language as it outperforms models using a single modality. [replace with analysis on the structure of emotions]
 \end{abstract}
 
 \section{Introduction}
 Sentiment analysis has been an active area of research in the past few years, especially on the readily available Twitter data, e.g. \citet{Bollen} who investigated the impact of collective mood states on stock market or \cite{Flaxman-16} who analysed day-of-week population well-being.
 
-Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing more expressiveness, and are not focused on the textual content but on the visual content. A Tumblr post will almost always be an image with some text accompanying the latter. Pictures have become prevalent on social media and characterising them could enable the understanding of billions of users. Unfortunately, there is no large publicly available dataset for multimodal sentiment analysis. This paper provides a new dataset, TumblrData \footnote{\texttt{https://github.com/anthonyhu/tumblr-sentiment}}, that will allow the research community to learn multimodal features representation of emotions.
+Contrary to Twitter, Tumblr posts are not limited to 140 characters, allowing more expressiveness, and are not focused on the textual content but on the visual content. A Tumblr post will almost always be an image with some text accompanying the latter. Pictures have become prevalent on social media and characterising them could enable the understanding of billions of users.
 
-Also, we propose a method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the Tumblr tags, considered as the `self-reported' emotion of the user. Our model incorporates both text and image and we aim to `read' them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
+[cite work on image captioning, annotated videos]
+
+We propose a method to uncover the emotional state of an individual posting on social media. The ground truth emotion will be extracted from the Tumblr tags, considered as the self-reported emotion of the user. Our model incorporates both text and image and we aim to read them to be able to understand the emotional content they imply about the user. Concretely, the Deep Sentiment model associates the features learned by the two modalities as follows:
 
 \begin{itemize}
     \item We fine-tune a pre-trained deep convolutional neural network, named Inception \citep{Szegedy-15}, to our specific task of emotion inferring.
@@ -65,7 +67,7 @@ Also, we propose a method to uncover the emotional state of an individual postin
 
 \section{TumblrData}
 
-Tumblr is a microblogging service where users post multimedia content with the following attributes: an image, text and tags. The tags are really valuable as they indicate the user's state of mind when writing his post. 
+Tumblr is a microblogging service where users post multimedia content with the following attributes: an image, text and tags. The tags are really valuable as they indicate the user's state of mind when writing his post. [more on why self-report is the gold standard]
 
 To build our dataset, queries were made through the Tumblr API searching for an emotion appearing in the tags. The 16 emotions retained are those with a high relative frequencies among the PANAS-X scale \citep{PANAS-X}. In some posts, the tag containing the emotion of the post also appeared in the text itself, undermining the possibility of learning meaningful relationships between the features and the emotion expressed. We thus removed from the text the tags containing the emotion to be predicted.
 
@@ -260,6 +262,8 @@ Deep Sentiment builds on the models we have seen before as shown in Figure \ref{
 \end{figure}
 
 \section{Results}
+
+\subsection{Training}
 Deep Sentiment was trained with the same configuration as before and figure \ref{train-validation} shows a comparison of the accuracy curves of the different models:
 
 [Would like to use different learning rates for image and text. Also try bayesian hyperparameters optimisation]
@@ -283,8 +287,6 @@ Deep Sentiment was trained with the same configuration as before and figure \ref
 
 This model combining text and image outperforms the algorithms only using those elements separately with 80\% train accuracy and 72\% validation accuracy. This shows that just like a human being, a neural network needs both visual and textual information to determine the emotion conveyed by a post. The synergy between visual recognition and natural language processing is impressive as shown in the comparison table \ref{all-results}.
 
-[Compute saliency maps on image and text as a sanity check: the network is looking at relevant words and objects to predict emotions]
-
 \begin{table}[H]
 \caption{Comparison of models}
 \begin{center}
@@ -300,18 +302,8 @@ This model combining text and image outperforms the algorithms only using those 
 \label{all-results}
 \end{table}
 
-Given an image $\mathcal{I}$ and text $\mathcal{T}$, Deep Sentiment computes the conditional probabilities of the classes given the input image and input text: $P(y | \mathcal{I}, \mathcal{T})$. The outputs $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n \in [0,1]^{16}$ are sampled from the distribution $Y| I, T$ where $I$ is the distribution of images $\mathcal{I}$ and $T$ the distribution of text $\mathcal{T}$. Using $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n$, the empirical correlation matrix of the different emotions can be computed. Correlations is a measure of similarity and as such the correlations can be used as a distance matrix to obtain ahierarchical clustering of the emotions as shown in figure \ref{dendrogram}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{Images/dendrogram.jpg}
-    \caption{Hierarchically-clustered heatmap of the emotion correlation matrix}
-    \label{dendrogram}
-\end{figure}
-
-There is a clear distinction between emotions that can be deemed as \textbf{positive} such as: `excited', `happy', `love', `optimistic' and \textbf{negative}: `scared', `angry', `ashamed', `annoyed', `disgusted'. In between lies ambivalent feelings such as `surprised' or `amazed'. Note that the hierarchical clustering formed relevant first-level clusters such as `happy' and `love', `calm' and `pensive' or `amazed' and `surprised'.
-
-Top words for each emotion. We artificially created posts the following way: the text consisted of only one of the most frequent 1,000 words in the whole dataset such as 'song'  and the associated image was the mean image. For each emotion, we reported the 10 highest scoring words from those 1,000 artificial posts in table \ref{top-words}.
+\subsection{Top words for each emotion}
+In order to know which words were the most relevant for each emotion, we artificially created posts the following way: the text was a single word -- each of the most frequent 1,000 words in the whole dataset were tried -- and the image was the mean image (per channel mean). For each emotion, we reported the 10 highest scoring words from those 1,000 artificial posts in table \ref{top-words}.
 
 \begin{table}[H]
 \caption{Top words for each emotion}
@@ -339,6 +331,39 @@ Top words for each emotion. We artificially created posts the following way: the
 \label{top-words}
 \end{table}
 
+[Compute saliency maps on image and text as a sanity check: the network is looking at relevant words and objects to predict emotions]
+
+\subsection{Emotions clustering}
+Given an image $\mathcal{I}$ and text $\mathcal{T}$, Deep Sentiment computes the conditional probabilities of the classes given the input image and input text: $P(y | \mathcal{I}, \mathcal{T})$. The outputs $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n \in [0,1]^{16}$ are sampled from the distribution $Y| I, T$ where $I$ is the distribution of images $\mathcal{I}$ and $T$ the distribution of text $\mathcal{T}$. Using $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n$, the empirical correlation matrix of the different emotions can be computed. Correlations is a measure of similarity and as such the correlations can be used as a distance matrix to obtain ahierarchical clustering of the emotions as shown in figure \ref{dendrogram}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/dendrogram.jpg}
+    \caption{Hierarchically-clustered heatmap of the emotion correlation matrix}
+    \label{dendrogram}
+\end{figure}
+
+There is a clear distinction between emotions that can be deemed as \textbf{positive} such as: `excited', `happy', `love', `optimistic' and \textbf{negative}: `scared', `angry', `ashamed', `annoyed', `disgusted'. In between lies ambivalent feelings such as `surprised' or `amazed'. Note that the hierarchical clustering formed relevant first-level clusters such as `happy' and `love', `calm' and `pensive' or `amazed' and `surprised'.
+
+\subsection{Affect/valence theory}
+
+Using Metric Multidimensional scaling on $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n$ (figure \ref{affect-valence}):
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \vskip 0pt %Necessary to align on image and not caption
+        \centering
+        \includegraphics[width=\linewidth]{Images/mds.png}
+        \caption{MDS with a random subset of posts}
+   \end{subfigure}
+   \begin{subfigure}[t]{.5\textwidth}
+       \vskip 0pt
+       \centering
+       \includegraphics[width=\linewidth]{Images/mds-center.jpg}
+       \caption{MDS with the centroids}
+    \end{subfigure}
+    \caption{Affect/valence}
+    \label{affect-valence}
+\end{figure}
 
 \subsubsection*{Acknowledgments}
 
