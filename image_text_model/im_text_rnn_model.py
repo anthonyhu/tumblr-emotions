@@ -628,18 +628,23 @@ def day_of_week_trend(checkpoint_dir):
         posts_logits = []
         posts_labels = []
         posts_days = []
+        posts_ids = []
         with monitored_session.MonitoredSession( # Generate queue
             session_creator=session_creator, hooks=None) as session:
             batch_size = config['batch_size']
             nb_batches = model.dataset.num_samples / batch_size
             for i in range(nb_batches):
-                np_logits, np_labels, np_days = session.run([model.logits, model.labels, model.days])
+                np_logits, np_labels, np_days, np_post_ids = session.run([model.logits, model.labels, 
+                    model.days, model.post_ids])
                 posts_logits.append(np_logits)
                 posts_labels.append(np_labels)
                 posts_days.append(np_days)
+                posts_ids.append(np_post_ids)
 
-    posts_logits, posts_labels, posts_days = np.vstack(posts_logits), np.hstack(posts_labels), np.hstack(posts_days)
+    posts_logits, posts_labels = np.vstack(posts_logits), np.hstack(posts_labels)
+    posts_days, posts_ids = np.hstack(posts_days), np.hstack(posts_ids)
     np.save('data/posts_logits_week.npy', posts_logits)
     np.save('data/posts_labels_week.npy', posts_labels)
     np.save('data/posts_days_week.npy', posts_days)
-    return posts_logits, posts_labels, posts_days
+    np.save('data/posts_ids_week.npy', posts_ids)
+    return posts_logits, posts_labels, posts_days, posts_ids
