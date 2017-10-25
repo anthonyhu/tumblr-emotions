@@ -578,7 +578,7 @@ def outliers_detection(checkpoint_dir):
         with monitored_session.MonitoredSession( # Generate queue
             session_creator=session_creator, hooks=None) as session:
             batch_size = config['batch_size']
-            nb_batches = 100#model.dataset.num_samples / batch_size
+            nb_batches = model.dataset.num_samples / batch_size
             for i in range(nb_batches):
                 current_dense = session.run(model.concat_features)
                 weight = float(i) * batch_size / ((i+1) * batch_size)
@@ -587,16 +587,59 @@ def outliers_detection(checkpoint_dir):
             # Now look at outliers
             max_norms = np.zeros((batch_size))
             max_post_ids = np.zeros((batch_size))
+            max_logits = np.zeros((batch_size, model.dataset.num_classes))
             for i in range(nb_batches):
-                current_dense, np_post_ids = session.run([model.concat_features, model.post_ids])
+                current_dense, np_post_ids, current_logits = session.run([model.concat_features, model.post_ids,
+                    model.logits])
                 current_diff = np.linalg.norm(current_dense - dense_mean, axis=1)
                 for k in range(batch_size):
                     if current_diff[k] > max_norms[k]:
                         max_norms[k] = current_diff[k]
                         max_post_ids[k] = np_post_ids[k]
+                        max_logits[k] = current_logits[k]
             
     np.save('data/max_norms.npy', max_norms)
     np.save('data/max_post_ids.npy', max_post_ids)
-    return max_norms, max_post_ids
+    np.save('data/max_logits.npy', max_logits)
+    return max_norms, max_post_ids, max_logits
 
-        
+def day_of_week_trend(checkpoint_dir):
+    """Compute day of week trend.
+    
+    Parameters:
+        checkpoint_dir: Checkpoint of the saved model during training.
+    """
+    with tf.Graph().as_default():
+        config = _CONFIG.copy()
+        config['mode'] = 'validation'
+        model = DeepSentiment(config)
+
+        # Load model
+        checkpoint_path = tf_saver.latest_checkpoint(checkpoint_dir)
+        scaffold = monitored_session.Scaffold(
+            init_op=None, init_feed_dict=None,
+            init_fn=None, saver=None)
+        session_creator = monitored_session.ChiefSessionCreator(
+            scaffold=scaffold,
+            checkpoint_filename_with_path=checkpoint_path,
+            master='',
+            config=None)
+
+        posts_logits = []
+        posts_labels = []
+        posts_days = []
+        with monitored_session.MonitoredSession( # Generate queue
+            session_creator=session_creator, hooks=None) as session:
+            batch_size = config['batch_size']
+            nb_batches = model.dataset.num_samples / batch_size
+            for i in range(nb_batches):
+                np_logits, np_labels, np_days = session.run([model.logits, model.labels, model.days])
+                posts_logits.append(np_logits)
+                posts_labels.append(np_labels)
+                posts_days.append(np_days)
+
+    posts_logits, posts_labels, posts_days = np.vstack(posts_logits), np.hstack(posts_labels), np.hstack(posts_days)
+    np.save('data/posts_logits_week.npy', posts_logits)
+    np.save('data/posts_labels_week.npy', posts_labels)
+    np.save('data/posts_days_week.npy', posts_days)
+    return posts_logits, posts_labels, posts_days
