@@ -124,7 +124,7 @@ Amazed & 10,367 & 61\% & 35\% \\
 Ashamed & 10,066 & 63\% & 22\% \\
 Disgusted & 9,178 & 69\% & 17\% \\
 Pensive & 8,409 & 57\% & 34\% \\
-Interested & 5,606 & 63\% & 32\% \\
+%Interested & 5,606 & 63\% & 32\% \\
     \bottomrule
     \end{tabular}
     
@@ -158,17 +158,6 @@ The Inception model was fed raw images, that were resized to a fixed size $(224,
 After the preprocessing described in Section 2, the dataset contains 258,803 posts that we split as 80\% train set and 20\% validation set. The metric used to evaluate the model is accuracy, which is the fraction of correctly classified images.
 
 The fine-tuned Inception is compared to a baseline: random guessing that includes the prior probabilities of the classes. Table \ref{image-results} summarises the results of the image model.
-%\begin{table}[H]
-%\caption{Prior probabilities of the classes}
-%\begin{center}
-   % \begin{tabular}{| c | c | c | c | c | c | c |}
-    %\hline
-    % & \textbf{happiness} & \textbf{sadness} &  \textbf{anger} & \textbf{surprise} & \textbf{fear} & \textbf{disgust} \\ \hline
-    %\textbf{Prior proba.} & 0.32 & 0.22 & 0.19 & 0.03 & 0.22 & 0.02 \\
-    %\hline
-    %\end{tabular}
-%\end{center} 
-%\end{table}
 
 \begin{table}[H]
 \caption{Image model against random guessing}
@@ -306,7 +295,7 @@ This model combining text and image outperforms the algorithms only using those 
 In order to know which words were the most relevant for each emotion, we artificially created posts the following way: the text was a single word -- each of the most frequent 1,000 words in the whole dataset were tried -- and the image was the mean image (per channel mean). For each emotion, we reported the 10 highest scoring words from those 1,000 artificial posts in table \ref{top-words}.
 
 \begin{table}[H]
-\caption{Top words for each emotion}
+\caption{Top 10 words for each emotion}
 \begin{center}
     \begin{tabular}{ l | l}
     Emotion & Top words\\
@@ -331,6 +320,10 @@ In order to know which words were the most relevant for each emotion, we artific
 \label{top-words}
 \end{table}
 
+Top 11-20 available in the annexe.
+
+
+
 [Compute saliency maps on image and text as a sanity check: the network is looking at relevant words and objects to predict emotions]
 
 \subsection{Emotions clustering}
@@ -347,7 +340,7 @@ There is a clear distinction between emotions that can be deemed as \textbf{posi
 
 \subsection{Affect/valence theory}
 
-Using Metric Multidimensional scaling on $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n$ (figure \ref{affect-valence}):
+We investigated whether the emotions could be represented as low-dimensional manifolds embedded in a high-dimensional space using multidimensional scaling (MDS), an unsupervised estimator for manifold learning. Applying MDS on $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{i=1}^n$ (figure \ref{affect-valence}) yields:
 \begin{figure}[H]
     \begin{subfigure}[t]{.5\textwidth}
         \vskip 0pt %Necessary to align on image and not caption
@@ -365,9 +358,96 @@ Using Metric Multidimensional scaling on $(y_i | \mathcal{I}_i, \mathcal{T}_i)_{
     \label{affect-valence}
 \end{figure}
 
+Given that I've used the sklearn implementation of MDS (Metric MDS), we can't know the explained variance. Using PCA I get: 32\% (dimension 1), 21\% (dim 2) and 11\% (dim3). I could switch to classical MDS that uses a SVD decomposition to access the explained variance.
+
+Also, plots of component 1 vs component 3, and component 2 vs component 3 (not sure what it's worth).
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \vskip 0pt %Necessary to align on image and not caption
+        \centering
+        \includegraphics[width=\linewidth]{Images/mds-center-1vs3.jpg}
+        \caption{MDS component 1 vs 3}
+   \end{subfigure}
+   \begin{subfigure}[t]{.5\textwidth}
+       \vskip 0pt
+       \centering
+       \includegraphics[width=\linewidth]{Images/mds-center-2vs3.jpg}
+       \caption{MDS component 2 vs 3}
+    \end{subfigure}
+    %\caption{MDS on compo}
+\end{figure}
+
+
+\subsection{Outliers}
+
+We wanted to know whether there were atypical posts in the dataset. We retrieved the posts that were the further from the others: let us denote by $\psi(\mathcal{I}, \mathcal{T})$ the vector of the dense layer for an image $\mathcal{I}$ and text $\mathcal{T}$. The outliers ($\mathcal{I}_{out}, \mathcal{T}_{out}$) maximised the Euclidean distance compared to the mean vector in the dense layer:
+
+\begin{equation}
+\left \Vert \psi(\mathcal{I}_{out}, \mathcal{T}_{out}) - \sum_{i=1}^n \psi(\mathcal{I}, \mathcal{T})\right \Vert_2^2
+\end{equation}
+
+In figure \ref{outlier1}, the image seems to relate to calmness but the text is completely misleading. In figure \ref{outlier2}, the text is relevant to the associated emotion but the model has trouble understanding the drawing that has bad lighting. In figure \ref{outlier3}, both image and text are hard to evaluate. [will also add how the model classified those posts]
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+        \vskip 0pt %Necessary to align on image and not caption
+        \centering
+        \includegraphics[width=.3\linewidth]{Images/outlier1.jpg}
+        \caption{\textbf{Calm}: ``I can't wait to design my own house"}
+        \label{outlier1}
+   \end{subfigure}
+   \begin{subfigure}[t]{.5\textwidth}
+       \vskip 0pt
+       \centering
+       \includegraphics[width=.3\linewidth]{Images/outlier3.jpg}
+       \caption{\textbf{Angry}: ``I drew the face of my anger. I'm still pretty upset about today, and so I just picked up my sketchbook and these things came out. I don't know what they are, but I feel a little better"}
+       \label{outlier2}
+    \end{subfigure}
+    \begin{subfigure}[t]{.5\textwidth}
+       \vskip 0pt
+       \centering
+       \includegraphics[width=.3\linewidth]{Images/outlier2.png}
+       \caption{\textbf{Bored}: ``...okay, I might bite a little (but not too hard)"}
+       \label{outlier3}
+    \end{subfigure}
+    \caption{Examples of posts difficult to classify}
+    \label{fig:outliers}
+\end{figure}
+
 \subsubsection*{Acknowledgments}
 
 \bibliography{iclr2018_conference}
 \bibliographystyle{iclr2018_conference}
+
+\newpage
+\section*{Annexe}
+
+\begin{table}[H]
+\caption{Top 11-20 words for each emotion}
+\begin{center}
+    \begin{tabular}{ l | l}
+    Emotion & Top words\\
+    \hline
+    \textbf{Happy} & beautiful, beauty, fun, nice, dinner, sweet, good, loves, amazing, comfortable\\
+\textbf{Calm} & view, sound, cool, continue, visit, push, woke, morning, safe, step\\
+\textbf{Sad} & cry, sick, hurt, dead, feeling, worse, death, upset, falling, panic\\
+\textbf{Scared} & kill, happened, cause, asleep, anxiety, worry, hurt, happen, worst, seriously\\
+\textbf{Bored} & sitting, suddenly, freaking, slowly, annoying, sometimes, gotten, completely, older, cold\\
+\textbf{Angry} & hurt, face, against, cause, hurts, fucking, fight, pain, strong, worst\\
+\textbf{Annoyed} & depressed, lately, conversation, constantly, scared, stupid, scares, bored, heard, extremely\\
+\textbf{Love} &  sweet, mother, forget, hate, her, song, enjoy, sister, wonderful, dear\\
+\textbf{Excited} & 2017, positive, am, definitely, awesome, happens, listening, happy, grow, wanna\\
+\textbf{Surprised} & annoyed, negative, apparently, u, minute, asked, sadness, happened, moments, laugh\\
+\textbf{Optimistic} & view, yet, believe, tomorrow, trending, said, situation, mood, forward, future\\
+\textbf{Amazed} & im, quite, appreciate, honestly, knew, learned, yang, felt, liked, asleep\\
+\textbf{Ashamed} & cried, afraid, annoyed, okay, sad, sick, pissed, fucking, depressed, wrong\\
+\textbf{Disgusted} & tumblr, pissed, anger, sorry, cried, fucking, terrified, honestly, scared, facebook\\
+\textbf{Pensive} &  depression, text, voice, lonely, soul, by, read, truth, sounds, middle\\
+    \end{tabular}
+\end{center} 
+\end{table}
+
+Still relevant, maybe a bit less as there is less data for a given emotion. [table is ordered in decreasing size]
 
 \end{document}
