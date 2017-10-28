@@ -2,6 +2,7 @@ import os
 import sys
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 from tensorflow.contrib import slim
@@ -9,11 +10,12 @@ from tensorflow.contrib.slim.python.slim.learning import train_step
 from tensorflow.python.training import monitored_session
 from tensorflow.python.training import saver as tf_saver
 from scipy.ndimage.filters import gaussian_filter1d
+from scipy.misc import imread, imresize
 
 from slim.preprocessing import inception_preprocessing
 from image_model import inception_v1
 from datasets import dataset_utils
-from text_model.text_preprocessing import _load_embedding_weights_glove
+from text_model.text_preprocessing import _load_embedding_weights_glove, _paragraph_to_ids
 from image_model.im_model import load_batch_with_text, get_init_fn
 from datasets.convert_to_dataset import get_split_with_text
 import matplotlib.pyplot as plt
@@ -648,3 +650,131 @@ def day_of_week_trend(checkpoint_dir):
     np.save('data/posts_days_week.npy', posts_days)
     np.save('data/posts_ids_week.npy', posts_ids)
     return posts_logits, posts_labels, posts_days, posts_ids
+
+def oasis_evaluation(checkpoint_dir):
+    """Compute gradient of W_embedding to get the word most relevant to a label.
+    
+    Parameters:
+        checkpoint_dir: Checkpoint of the saved model during training.
+    """
+    with tf.Graph().as_default():
+        config = _CONFIG.copy()
+        mode = 'validation'
+        dataset_dir = config['dataset_dir']
+        text_dir = config['text_dir']
+        emb_dir = config['emb_dir']
+        filename = config['filename']
+        initial_lr = config['initial_lr']
+        #batch_size = config['batch_size']
+        im_features_size = config['im_features_size']
+        rnn_size = config['rnn_size']
+        final_endpoint = config['final_endpoint']
+
+        tf.logging.set_verbosity(tf.logging.INFO)
+
+        batch_size = 1
+        image_size = inception_v1.default_image_size
+        images = tf.placeholder(tf.float32, [image_size, image_size, 3])
+        images_prep = inception_preprocessing.preprocess_image(images, image_size, image_size, is_training=False)
+        images_prep_final = tf.expand_dims(images_prep, 0)
+
+        texts = tf.placeholder(tf.int32, [batch_size, _POST_SIZE])
+        seq_lens = tf.placeholder(tf.int32, [batch_size])
+
+        #self.learning_rate = tf.Variable(initial_lr, trainable=False)
+        #self.lr_rate_placeholder = tf.placeholder(tf.float32)
+        #self.lr_rate_assign = self.learning_rate.assign(self.lr_rate_placeholder)
+
+        #self.dataset = get_split_with_text(mode, dataset_dir)
+        #image_size = inception_v1.default_image_size
+        #images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
+            
+        # Create the model, use the default arg scope to configure the batch norm parameters.
+        is_training = (mode == 'train')
+        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
+            images_features, _ = inception_v1.inception_v1(images_prep_final, final_endpoint=final_endpoint,
+                num_classes=im_features_size, is_training=is_training)
+
+        # Text model
+        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
+        vocab_size, embedding_dim = embedding.shape
+        word_to_id = dict(zip(vocabulary, range(vocab_size)))
+        # Unknown words = vector with zeros
+        embedding = np.concatenate([embedding, np.zeros((1, embedding_dim))])
+        word_to_id['<ukn>'] = vocab_size
+
+        vocab_size = len(word_to_id)
+        nb_emotions = 8
+        with tf.variable_scope('Text'):
+            # Word embedding
+            W_embedding = tf.get_variable('W_embedding', [vocab_size, embedding_dim], trainable=False)
+            #self.embedding_placeholder = tf.placeholder(tf.float32, [vocab_size, embedding_dim])
+            #self.embedding_init = W_embedding.assign(self.embedding_placeholder)
+            input_embed = tf.nn.embedding_lookup(W_embedding, texts)
+            #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
+
+            # LSTM
+            cell = tf.contrib.rnn.BasicLSTMCell(rnn_size)
+            rnn_outputs, final_state = tf.nn.dynamic_rnn(cell, input_embed, sequence_length=seq_lens, dtype=tf.float32)
+            # Need to convert seq_lens to int32 for stack
+            texts_features = tf.gather_nd(rnn_outputs, tf.stack([tf.range(batch_size), tf.cast(seq_lens, tf.int32) - 1], axis=1))
+
+        # Concatenate image and text features
+        concat_features = tf.concat([images_features, texts_features], axis=1)
+
+        W_softmax = tf.get_variable('W_softmax', [im_features_size + rnn_size, nb_emotions])
+        b_softmax = tf.get_variable('b_softmax', [nb_emotions])
+        logits = tf.matmul(concat_features, W_softmax) + b_softmax
+        
+        # Initialise image
+        #image_init = tf.random_normal([image_size, image_size, 3])
+        #image_init = inception_preprocessing.preprocess_image(image_init, image_size, image_size, is_training=False)
+        #image_init = tf.expand_dims(image_init, 0)
+
+        # Load model
+        checkpoint_path = tf_saver.latest_checkpoint(checkpoint_dir)
+        scaffold = monitored_session.Scaffold(
+            init_op=None, init_feed_dict=None,
+            init_fn=None, saver=None)
+        session_creator = monitored_session.ChiefSessionCreator(
+            scaffold=scaffold,
+            checkpoint_filename_with_path=checkpoint_path,
+            master='',
+            config=None)
+
+        # Load oasis dataset
+        df_oasis = pd.read_csv('data/oasis/OASIS.csv', encoding='utf-8')
+
+        def load_image(name):
+            im_path = 'data/oasis/images/' + name.strip() + '.jpg'
+            one_im = imread(im_path)
+            one_im = imresize(one_im, ((image_size, image_size, 3)))[:, :, :3] # to get rid of alpha channel
+            return one_im
+            
+        df_oasis['image'] = df_oasis['Theme'].map(lambda x: load_image(x))
+
+        df_oasis['Theme'] = df_oasis['Theme'].map(lambda x: ''.join([i for i in x if not i.isdigit()]).strip())
+        vocabulary, embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
+        word_to_id = dict(zip(vocabulary, range(len(vocabulary))))
+        df_oasis['text_list'], df_oasis['text_len'] = zip(*df_oasis['Theme'].map(lambda x: 
+                                                                                _paragraph_to_ids(x, word_to_id,
+                                                                                                  _POST_SIZE, emotions='')))
+        with monitored_session.MonitoredSession(
+            session_creator=session_creator, hooks=None) as session:
+
+            nb_iter = 2#df_oasis.shape[0] / batch_size
+            scores = []
+            for i in range(nb_iter):
+                np_images = df_oasis['image'][(i * batch_size):((i+1) * batch_size)]
+                np_texts = np.vstack(df_oasis['text_list'][(i * batch_size):((i+1) * batch_size)])
+                np_seq_lens = df_oasis['text_len'][(i * batch_size):((i+1) * batch_size)].values
+                print(np_images.shape)
+                session.run(images, feed_dict={images: np_images})
+                print(np_texts.shape)
+                session.run(texts, feed_dict={texts: np_texts})
+                print(np_seq_lens.shape)
+                session.run(seq_lens, feed_dict={seq_lens: np_seq_lens})
+                #scores.append(session.run(logits, feed_dict={images: np_images, texts: np_texts, seq_lens: np_seq_lens}))
+    scores = np.vstack(scores)
+    np.save('data/oasis_logits.npy', scores)
+    return scores
