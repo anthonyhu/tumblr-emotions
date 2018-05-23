@@ -113,5 +113,6 @@ embedding_weights/
 deep_sentiment_model/
 plots/
 results/
+Thesis/
 KDD2018/
 *.pynb
