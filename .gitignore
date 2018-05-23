@@ -114,3 +114,4 @@ deep_sentiment_model/
 plots/
 results/
 KDD2018/
+*.pynb
