@@ -1,11 +1,11 @@
 import os
-import urllib2
 import io
 
 import pandas as pd
 import tensorflow as tf
 
 from PIL import Image
+from urllib.request import urlopen
 from text_model.text_preprocessing import preprocess_one_df
 from text_model.text_preprocessing import _load_embedding_weights_glove, _load_embedding_weights_word2vec
 
@@ -41,7 +41,7 @@ def download_im(search_query, start, end, dataset_dir, subdir='photos'):
         if links[i] == links[i]:
             # Open url and convert to JPEG image
             try:
-                f = urllib2.urlopen(links[i])
+                f = urlopen(links[i])
             except Exception:
                 continue
             image_file = io.BytesIO(f.read())
@@ -91,7 +91,7 @@ def download_im_with_text(search_query, start, end, dataset_dir='data', subdir='
         if links[i] == links[i]:
             # Open url and convert to JPEG image
             try:
-                f = urllib2.urlopen(links[i])
+                f = urlopen(links[i])
             except Exception:
                 continue
             image_file = io.BytesIO(f.read())

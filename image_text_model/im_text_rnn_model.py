@@ -34,69 +34,8 @@ _CONFIG = {'mode': 'train',
            'final_endpoint': 'Mixed_5c',
            'fc_size': 512}
 
+
 class DeepSentiment():
-    def __init__(self, config):
-        self.config = config
-        mode = config['mode']
-        dataset_dir = config['dataset_dir']
-        text_dir = config['text_dir']
-        emb_dir = config['emb_dir']
-        filename = config['filename']
-        initial_lr = config['initial_lr']
-        batch_size = config['batch_size']
-        im_features_size = config['im_features_size']
-        rnn_size = config['rnn_size']
-        final_endpoint = config['final_endpoint']
-
-        tf.logging.set_verbosity(tf.logging.INFO)
-
-        self.learning_rate = tf.Variable(initial_lr, trainable=False)
-        self.lr_rate_placeholder = tf.placeholder(tf.float32)
-        self.lr_rate_assign = self.learning_rate.assign(self.lr_rate_placeholder)
-
-        self.dataset = get_split_with_text(mode, dataset_dir)
-        image_size = inception_v1.default_image_size
-        images, _, texts, seq_lens, self.labels, self.post_ids, self.days = load_batch_with_text(self.dataset, batch_size, 
-            height=image_size, width=image_size)
-            
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        is_training = (mode == 'train')
-        with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-            images_features, _ = inception_v1.inception_v1(images, final_endpoint=final_endpoint,
-                num_classes=im_features_size, is_training=is_training)
-
-        # Text model
-        vocabulary, self.embedding = _load_embedding_weights_glove(text_dir, emb_dir, filename)
-        vocab_size, embedding_dim = self.embedding.shape
-        word_to_id = dict(zip(vocabulary, range(vocab_size)))
-        # Unknown words = vector with zeros
-        self.embedding = np.concatenate([self.embedding, np.zeros((1, embedding_dim))])
-        word_to_id['<ukn>'] = vocab_size
-
-        vocab_size = len(word_to_id)
-        self.nb_emotions = self.dataset.num_classes
-        with tf.variable_scope('Text'):
-            # Word embedding
-            W_embedding = tf.get_variable('W_embedding', [vocab_size, embedding_dim], trainable=False)
-            self.embedding_placeholder = tf.placeholder(tf.float32, [vocab_size, embedding_dim])
-            self.embedding_init = W_embedding.assign(self.embedding_placeholder)
-            input_embed = tf.nn.embedding_lookup(W_embedding, texts)
-            #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
-
-            # LSTM
-            cell = tf.contrib.rnn.BasicLSTMCell(rnn_size)
-            rnn_outputs, final_state = tf.nn.dynamic_rnn(cell, input_embed, sequence_length=seq_lens, dtype=tf.float32)
-            # Need to convert seq_lens to int32 for stack
-            texts_features = tf.gather_nd(rnn_outputs, tf.stack([tf.range(batch_size), tf.cast(seq_lens, tf.int32) - 1], axis=1))
-
-        # Concatenate image and text features
-        self.concat_features = tf.concat([images_features, texts_features], axis=1)
-
-        W_softmax = tf.get_variable('W_softmax', [im_features_size + rnn_size, self.nb_emotions])
-        b_softmax = tf.get_variable('b_softmax', [self.nb_emotions])
-        self.logits = tf.matmul(self.concat_features, W_softmax) + b_softmax
-
-class DeepSentiment2():
     def __init__(self, config):
         self.config = config
         mode = config['mode']
@@ -180,7 +119,7 @@ def train_deep_sentiment(checkpoints_dir, train_dir, num_steps):
     tf.gfile.MakeDirs(train_dir)
 
     with tf.Graph().as_default():
-        model = DeepSentiment2(_CONFIG)
+        model = DeepSentiment(_CONFIG)
         # Specify the loss function:
         one_hot_labels = slim.one_hot_encoding(model.labels, model.nb_emotions)
         slim.losses.softmax_cross_entropy(model.logits, one_hot_labels)
@@ -211,17 +150,6 @@ def train_deep_sentiment(checkpoints_dir, train_dir, num_steps):
             if train_step_fn.step == 0:
                 session.run(model.embedding_init, feed_dict={model.embedding_placeholder: model.embedding})
             total_loss, should_stop = train_step(session, *args, **kwargs)
-
-            #variables_to_print = ['InceptionV1/Conv2d_2b_1x1/weights:0', 'InceptionV1/Mixed_4b/Branch_3/Conv2d_0b_1x1/weights:0',
-             #                     'InceptionV1/Logits/Conv2d_0c_1x1/weights:0']
-            #for v in slim.get_model_variables():
-             #   if v.name in variables_to_print:
-              #      print(v.name)
-               #     print(session.run(v))
-                #    print('\n')
-            #acc_valid = session.run(accuracy_valid)
-            #print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
-            #sys.stdout.flush()
             train_step_fn.step += 1
             return [total_loss, should_stop]
         
@@ -252,7 +180,7 @@ def evaluate_deep_sentiment(checkpoint_dir, log_dir, mode, num_evals):
     with tf.Graph().as_default():
         config = _CONFIG.copy()
         config['mode'] = mode
-        model = DeepSentiment2(config)
+        model = DeepSentiment(config)
 
         # Accuracy metrics
         accuracy = slim.metrics.streaming_accuracy(tf.cast(model.labels, tf.int32),
@@ -474,14 +402,6 @@ def word_most_relevant(top_words, num_classes, checkpoint_dir):
         texts = tf.placeholder(tf.int32, [batch_size, _POST_SIZE])
         seq_lens = tf.placeholder(tf.int32, [batch_size])
 
-        #self.learning_rate = tf.Variable(initial_lr, trainable=False)
-        #self.lr_rate_placeholder = tf.placeholder(tf.float32)
-        #self.lr_rate_assign = self.learning_rate.assign(self.lr_rate_placeholder)
-
-        #self.dataset = get_split_with_text(mode, dataset_dir)
-        #image_size = inception_v1.default_image_size
-        #images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
-            
         # Create the model, use the default arg scope to configure the batch norm parameters.
         is_training = (mode == 'train')
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
@@ -501,10 +421,7 @@ def word_most_relevant(top_words, num_classes, checkpoint_dir):
         with tf.variable_scope('Text'):
             # Word embedding
             W_embedding = tf.get_variable('W_embedding', [vocab_size, embedding_dim], trainable=False)
-            #self.embedding_placeholder = tf.placeholder(tf.float32, [vocab_size, embedding_dim])
-            #self.embedding_init = W_embedding.assign(self.embedding_placeholder)
             input_embed = tf.nn.embedding_lookup(W_embedding, texts)
-            #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
 
             # LSTM
             cell = tf.contrib.rnn.BasicLSTMCell(rnn_size)
@@ -515,9 +432,15 @@ def word_most_relevant(top_words, num_classes, checkpoint_dir):
         # Concatenate image and text features
         concat_features = tf.concat([images_features, texts_features], axis=1)
 
-        W_softmax = tf.get_variable('W_softmax', [im_features_size + rnn_size, nb_emotions])
+        # Dense layer
+        W_fc = tf.get_variable('W_fc', [im_features_size + rnn_size, fc_size])
+        b_fc = tf.get_variable('b_fc', [fc_size])
+        dense_layer = tf.matmul(concat_features, W_fc) + b_fc
+        dense_layer_relu = tf.nn.relu(dense_layer)
+
+        W_softmax = tf.get_variable('W_softmax', [fc_size, nb_emotions])
         b_softmax = tf.get_variable('b_softmax', [nb_emotions])
-        logits = tf.matmul(concat_features, W_softmax) + b_softmax
+        logits = tf.matmul(dense_layer_relu, W_softmax) + b_softmax
         
         # Initialise image
         #image_init = tf.random_normal([image_size, image_size, 3])
@@ -651,11 +574,12 @@ def day_of_week_trend(checkpoint_dir):
     np.save('data/posts_ids_week.npy', posts_ids)
     return posts_logits, posts_labels, posts_days, posts_ids
 
-def oasis_evaluation(checkpoint_dir):
-    """Compute gradient of W_embedding to get the word most relevant to a label.
+def oasis_evaluation(checkpoint_dir, num_classes):
+    """Compute the logits of the OASIS dataset.
     
     Parameters:
         checkpoint_dir: Checkpoint of the saved model during training.
+        num_classes: Number of classes.
     """
     with tf.Graph().as_default():
         config = _CONFIG.copy()
@@ -681,14 +605,6 @@ def oasis_evaluation(checkpoint_dir):
         texts = tf.placeholder(tf.int32, [batch_size, _POST_SIZE])
         seq_lens = tf.placeholder(tf.int32, [batch_size])
 
-        #self.learning_rate = tf.Variable(initial_lr, trainable=False)
-        #self.lr_rate_placeholder = tf.placeholder(tf.float32)
-        #self.lr_rate_assign = self.learning_rate.assign(self.lr_rate_placeholder)
-
-        #self.dataset = get_split_with_text(mode, dataset_dir)
-        #image_size = inception_v1.default_image_size
-        #images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
-            
         # Create the model, use the default arg scope to configure the batch norm parameters.
         is_training = (mode == 'train')
         with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
@@ -704,14 +620,11 @@ def oasis_evaluation(checkpoint_dir):
         word_to_id['<ukn>'] = vocab_size
 
         vocab_size = len(word_to_id)
-        nb_emotions = 8
+        nb_emotions = num_classes
         with tf.variable_scope('Text'):
             # Word embedding
             W_embedding = tf.get_variable('W_embedding', [vocab_size, embedding_dim], trainable=False)
-            #self.embedding_placeholder = tf.placeholder(tf.float32, [vocab_size, embedding_dim])
-            #self.embedding_init = W_embedding.assign(self.embedding_placeholder)
             input_embed = tf.nn.embedding_lookup(W_embedding, texts)
-            #input_embed_dropout = tf.nn.dropout(input_embed, self.keep_prob)
 
             # LSTM
             cell = tf.contrib.rnn.BasicLSTMCell(rnn_size)
@@ -722,14 +635,15 @@ def oasis_evaluation(checkpoint_dir):
         # Concatenate image and text features
         concat_features = tf.concat([images_features, texts_features], axis=1)
 
-        W_softmax = tf.get_variable('W_softmax', [im_features_size + rnn_size, nb_emotions])
+        # Dense layer
+        W_fc = tf.get_variable('W_fc', [im_features_size + rnn_size, fc_size])
+        b_fc = tf.get_variable('b_fc', [fc_size])
+        dense_layer = tf.matmul(concat_features, W_fc) + b_fc
+        dense_layer_relu = tf.nn.relu(dense_layer)
+
+        W_softmax = tf.get_variable('W_softmax', [fc_size, nb_emotions])
         b_softmax = tf.get_variable('b_softmax', [nb_emotions])
-        logits = tf.matmul(concat_features, W_softmax) + b_softmax
-        
-        # Initialise image
-        #image_init = tf.random_normal([image_size, image_size, 3])
-        #image_init = inception_preprocessing.preprocess_image(image_init, image_size, image_size, is_training=False)
-        #image_init = tf.expand_dims(image_init, 0)
+        logits = tf.matmul(dense_layer_relu, W_softmax) + b_softmax
 
         # Load model
         checkpoint_path = tf_saver.latest_checkpoint(checkpoint_dir)
@@ -762,7 +676,7 @@ def oasis_evaluation(checkpoint_dir):
         with monitored_session.MonitoredSession(
             session_creator=session_creator, hooks=None) as session:
 
-            nb_iter = 2#df_oasis.shape[0] / batch_size
+            nb_iter = df_oasis.shape[0] / batch_size
             scores = []
             for i in range(nb_iter):
                 np_images = df_oasis['image'][(i * batch_size):((i+1) * batch_size)]

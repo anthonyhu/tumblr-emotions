@@ -24,12 +24,12 @@ def _load_embedding_weights_glove(text_dir, emb_dir, filename):
     """
     vocabulary = []
     embedding = []
-    with open(os.path.join(text_dir, emb_dir, filename), 'rb') as f:
+    with open(os.path.join(text_dir, emb_dir, filename), 'r') as f:
         for line in f.readlines():
             row = line.strip().split(' ')
             # Convert to unicode
-            vocabulary.append(row[0].decode('utf-8', 'ignore'))
-            embedding.append(map(np.float32, row[1:]))
+            vocabulary.append(row[0])
+            embedding.append([np.float32(x) for x in row[1:]])
         embedding = np.array(embedding)
         print('Finished loading word embedding weights.')
     return vocabulary, embedding
@@ -95,7 +95,7 @@ def _paragraph_to_ids(paragraph, word_to_id, post_size, emotions):
     # Remove punctuation, convert to lower case before splitting
     words = regex.sub('', paragraph).lower().split()
     # Replace unknown words by an id equal to the size of the vocab
-    words = map(lambda x: word_to_id.get(x, vocab_size), words)
+    words = [word_to_id.get(x, vocab_size) for x in words]
     words_len = len(words)
     if words_len > post_size:
         words = words[:post_size]

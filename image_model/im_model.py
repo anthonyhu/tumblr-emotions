@@ -8,12 +8,8 @@ import tensorflow as tf
 
 from tensorflow.contrib import slim
 from tensorflow.contrib.slim.python.slim.learning import train_step
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
 
 from slim.preprocessing import inception_preprocessing
-#from slim.nets import inception
 from image_model import inception_v1
 from datasets import dataset_utils
 from datasets.convert_to_dataset import get_split, get_split_with_text
@@ -157,7 +153,8 @@ class ImageModel():
 
         self.dataset = get_split_with_text(mode, dataset_dir)
         image_size = inception_v1.default_image_size
-        images, _, texts, seq_lens, self.labels = load_batch_with_text(self.dataset, batch_size, height=image_size, width=image_size)
+        images, _, texts, seq_lens, self.labels, _, _ = load_batch_with_text(self.dataset, batch_size, height=image_size, 
+                                                                             width=image_size)
             
         self.nb_emotions = self.dataset.num_classes
         # Create the model, use the default arg scope to configure the batch norm parameters.
@@ -208,17 +205,7 @@ def train_image_model(checkpoints_dir, train_dir, num_steps):
                 train_step_fn.epoch += 1
 
             total_loss, should_stop = train_step(session, *args, **kwargs)
-
-            #variables_to_print = ['InceptionV1/Conv2d_2b_1x1/weights:0', 'InceptionV1/Mixed_4b/Branch_3/Conv2d_0b_1x1/weights:0',
-             #                     'InceptionV1/Logits/Conv2d_0c_1x1/weights:0']
-            #for v in slim.get_model_variables():
-             #   if v.name in variables_to_print:
-              #      print(v.name)
-               #     print(session.run(v))
-                #    print('\n')
-            #acc_valid = session.run(accuracy_valid)
-            #print('Step {0}: loss: {1:.3f}, validation accuracy: {2:.3f}'.format(train_step_fn.step, total_loss, acc_valid))
-            #sys.stdout.flush()
+            
             train_step_fn.step += 1
             return [total_loss, should_stop]
         
@@ -273,42 +260,3 @@ def evaluate_image_model(checkpoint_dir, log_dir, mode, num_evals):
             log_dir,
             num_evals=num_evals,
             eval_op=names_to_updates.values())
-        
-def softmax_regression(num_valid, C):
-    """Run a softmax regression on the images.
-
-    Parameters:
-        num_valid: Size of the validation set.
-        C: Inverse of the regularization strength.
-    """
-    # Load data
-    X_train, X_valid, y_train, y_valid = get_numpy_data('data', num_valid)
-    logistic = LogisticRegression(multi_class='multinomial', solver='newton-cg',
-                                  C=C, random_state=_RANDOM_SEED)
-    print('Start training Logistic Regression.')
-    logistic.fit(X_train, y_train)
-
-    accuracy_train = accuracy_score(logistic.predict(X_train), y_train)
-    valid_accuracy = accuracy_score(logistic.predict(X_valid), y_valid)
-    print('Training accuracy: {0:.3f}'.format(accuracy_train))
-    print('Validation accuracy: {0:.3f}'.format(valid_accuracy))
-
-def forest(num_valid, n_estimators, max_depth):
-    """Run a Random Forest on the images.
-
-    Parameters:
-        num_valid: Size of the validation set.
-        n_estimators: Number of trees.
-        max_depth: Maximum depth of a tree.
-    """
-    # Load data
-    X_train, X_valid, y_train, y_valid = get_numpy_data('data', num_valid)
-    forest = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, 
-                                    random_state=_RANDOM_SEED)
-    print('Start training Random Forest.')
-    forest.fit(X_train, y_train)
-
-    accuracy_train = accuracy_score(forest.predict(X_train), y_train)
-    valid_accuracy = accuracy_score(forest.predict(X_valid), y_valid)
-    print('Training accuracy: {0:.3f}'.format(accuracy_train))
-    print('Validation accuracy: {0:.3f}'.format(valid_accuracy))
