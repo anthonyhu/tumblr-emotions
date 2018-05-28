@@ -1,5 +1,5 @@
 # Multimodal Sentiment Analysis to Explore the Structure of Emotions (KDD 2018)
-This repository contains the code to reproduce the results in the paper: [link].
+This repository contains the code to reproduce the results in the [paper](https://arxiv.org/abs/1805.10205).
 
 ## Tumblr data
 In the `datasets` module:
